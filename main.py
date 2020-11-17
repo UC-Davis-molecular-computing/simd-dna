@@ -6,7 +6,7 @@ from json import JSONEncoder
 
 program_loop = True
 cell_types = {}
-strands = {}
+strand_types = {}
 registers = {}
 instructions = []
 
@@ -51,11 +51,37 @@ class Register:
     def add_cell(self, cell_name):
         self.cells.append(cell_name)
 
-    def add_covering(self, cell_index, strand_type, offset):
+    def get_cell_at_domain_index(self, domain_index):
+        total_domains = 0
+        for i in range(len(self.cells)):
+            cell = cell_types[self.cells[i]]
+            if total_domains <= domain_index < total_domains + len(cell.domains):
+                return i, domain_index - total_domains
+            total_domains += len(cell.domains)
+
+        return len(self.cells), 0
+
+    def get_coverings_at_domain_index(self, domain_index):
+        coverings = []
+        cell_index, offset = self.get_cell_at_domain_index(domain_index)
+        if cell_index == len(self.cells):
+            return coverings
+        domain_label = cell_types[self.cells[cell_index]].domains[offset]
+
+        for covering in self.coverings:
+            start_index = covering['start_index']
+            strand = covering['strand']
+            if start_index <= domain_index < start_index + len(strand.domains) \
+                    and domain_label == strand.domains[domain_index - start_index]:
+                coverings.append(covering)
+
+        return coverings
+
+    def attempt_displacement(self, cell_index, strand_type, offset):
         if cell_index < 0:
             cell_index = len(self.cells) + cell_index
         cell = cell_types[self.cells[cell_index]]
-        strand = strands[strand_type]
+        strand = strand_types[strand_type]
 
         if strand.is_complementary:
             return
@@ -154,16 +180,16 @@ def add_cells_to_register():
             data = covering.split(',')
             strand_name = data[0]
             offset = int(data[1])
-            current_register.add_covering(i, strand_name, offset)
+            current_register.attempt_displacement(i, strand_name, offset)
 
 
-def add_strand():
-    global strands
+def add_strand_type():
+    global strand_types
     name = input('What is the strand name? ')
     domains = input('Enter domains separated by commas: ').split(',')
     is_complementary = input('Is the strand complementary to the top strand? Y or N? ')
 
-    strands[name] = Strand(name, domains, True if is_complementary.lower() == 'y' else False)
+    strand_types[name] = Strand(name, domains, True if is_complementary.lower() == 'y' else False)
 
 
 def add_instruction():
@@ -293,7 +319,7 @@ def save_data():
     with open(filename, 'w') as file:
         json.dump({
             'cell_types': cell_types,
-            'strands': strands,
+            'strands': strand_types,
             'registers': registers,
             'instructions': instructions
         }, file, indent=4, cls=ObjectEncoder)
@@ -317,15 +343,15 @@ def simd_simulator(args):
         print('Loading saved data...')
         with open(args[1]) as file:
             data = json.load(file)
-            global cell_types, registers, strands, instructions
+            global cell_types, registers, strand_types, instructions
             cell_types = decode_json_dict(data['cell_types'], Cell)
-            strands = decode_json_dict(data['strands'], Strand)
+            strand_types = decode_json_dict(data['strand_types'], Strand)
             registers = decode_json_dict(data['registers'], Register)
             instructions = data['instructions']
 
     choice_dict = {'1': add_cell_type,
                    '2': add_cells_to_register,
-                   '3': add_strand,
+                   '3': add_strand_type,
                    '4': add_instruction,
                    '5': run_simulation,
                    '6': save_data,
