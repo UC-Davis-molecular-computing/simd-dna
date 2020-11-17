@@ -70,7 +70,7 @@ class Register:
 
         for covering in self.coverings:
             start_index = covering['start_index']
-            strand = covering['strand']
+            strand = strand_types[covering['strand_name']]
             if start_index <= domain_index < start_index + len(strand.domains) \
                     and domain_label == strand.domains[domain_index - start_index]:
                 coverings.append(covering)
@@ -106,7 +106,7 @@ class Register:
                         matchings += 1
 
                 if matchings >= 2:
-                    new_covering = {'start_index': domain_index, 'strand': strand}
+                    new_covering = {'start_index': domain_index, 'strand_name': strand_type}
                     self.coverings.append(new_covering)
                     self.coverings.sort(key=lambda x: x['start_index'])
                     self.displace_strands(new_covering)
@@ -121,7 +121,8 @@ class Register:
 
         cell_end = cell_start + len(cell_types[self.cells[cell_index]].domains)
         covering_start = self.coverings[covering_index]['start_index']
-        covering_end = covering_start + len(self.coverings[covering_index]['strand'].domains)
+        strand = strand_types[self.coverings[covering_index]['strand_name']]
+        covering_end = covering_start + len(strand.domains)
 
         return covering_end >= cell_start and covering_start <= cell_end
 
@@ -134,12 +135,13 @@ class Register:
             cell_start += len(cell_types[self.cells[i]].domains)
 
         offset = cell_start - covering['start_index']
-        if domain_index + offset < 0 or domain_index + offset >= len(covering['strand'].domains):
+        strand = strand_types[covering['strand_name']]
+        if domain_index + offset < 0 or domain_index + offset >= len(strand.domains):
             return None
 
         strand_index = domain_index + offset
-        domain2 = covering['strand'].domains[strand_index]
-        is_last = strand_index + 1 == len(covering['strand'].domains)
+        domain2 = strand.domains[strand_index]
+        is_last = strand_index + 1 == len(strand.domains)
 
         return domain1 == domain2, is_last
 
@@ -158,7 +160,7 @@ class Register:
         self.coverings = []
         for covering in coverings:
             self.coverings.append({'start_index': covering['start_index'],
-                                   'strand': Strand.decode_json(**(covering['strand']))})
+                                   'strand_name': covering['strand_name']})
         return self
 
 
@@ -283,7 +285,8 @@ def print_register(register):
 
     if len(coverings) > 1:
         last_covering = coverings[-1]
-        for _ in range(previous_domains, last_covering['start_index'] + len(last_covering['strand'].domains)):
+        strand = strand_types[last_covering['strand_name']]
+        for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
             print('↗', end='')
 
     print()
@@ -338,7 +341,7 @@ def save_data():
     with open(filename, 'w') as file:
         json.dump({
             'cell_types': cell_types,
-            'strands': strand_types,
+            'strand_types': strand_types,
             'registers': registers,
             'instructions': instructions
         }, file, indent=4, cls=ObjectEncoder)
