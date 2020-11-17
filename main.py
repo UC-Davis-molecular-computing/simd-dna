@@ -48,22 +48,13 @@ class Register:
         self.cells = []
         self.coverings = []
 
-    def add_cells(self, cell_data):
-        self.cells.append(cell_data)
-
-    def get_cell(self, index):
-        if index < 0:
-            index = len(self.cells) + index
-
-        if index < len(self.cells):
-            return self.cells[index]
-        else:
-            return None
+    def add_cell(self, cell_name):
+        self.cells.append(cell_name)
 
     def add_covering(self, cell_index, strand_type, offset):
         if cell_index < 0:
             cell_index = len(self.cells) + cell_index
-        cell = self.get_cell(cell_index)
+        cell = cell_types[self.cells[cell_index]]
         strand = strands[strand_type]
 
         if strand.is_complementary:
@@ -78,7 +69,7 @@ class Register:
         if matches >= 2:
             total_domains = 0
             for i in range(cell_index):
-                total_domains += len(self.cells[i].domains)
+                total_domains += len(cell_types[self.cells[i]].domains)
 
             self.coverings.append({'start_index': total_domains + offset, 'strand': strand})
             self.coverings.sort(key=lambda x: x['start_index'])
@@ -89,21 +80,21 @@ class Register:
 
         cell_start = 0
         for i in range(cell_index):
-            cell_start += len(self.cells[i].domains)
+            cell_start += len(cell_types[self.cells[i]].domains)
 
-        cell_end = cell_start + len(self.cells[cell_index].domains)
+        cell_end = cell_start + len(cell_types[self.cells[cell_index]].domains)
         covering_start = self.coverings[covering_index]['start_index']
         covering_end = covering_start + len(self.coverings[covering_index]['strand'].domains)
 
         return covering_end >= cell_start and covering_start <= cell_end
 
     def cell_matches_strand_domain(self, cell_index, covering_index, domain_index):
-        domain1 = self.cells[cell_index].domains[domain_index]
+        domain1 = cell_types[self.cells[cell_index]].domains[domain_index]
 
         covering = self.coverings[covering_index]
         cell_start = 0
         for i in range(cell_index):
-            cell_start += len(self.cells[i].domains)
+            cell_start += len(cell_types[self.cells[i]].domains)
 
         offset = cell_start - covering['start_index']
         if domain_index + offset < 0 or domain_index + offset >= len(covering['strand'].domains):
@@ -121,9 +112,7 @@ class Register:
     @staticmethod
     def decode_json(name, cells, coverings):
         self = Register(name)
-        self.cells = []
-        for cell in cells:
-            self.cells.append(Cell.decode_json(**cell))
+        self.cells = cells
 
         self.coverings = []
         for covering in coverings:
@@ -152,7 +141,7 @@ def add_cells_to_register():
     copies = int(input('Enter the number of copies of each cell: '))
 
     for _ in range(copies):
-        current_register.add_cells(cell_types[cell_name])
+        current_register.add_cell(cell_name)
     coverings = input('Enter initial coverings for each cell copy: ')
 
     if coverings == "":
@@ -200,7 +189,8 @@ def print_register(register):
     coverings = register.coverings
 
     print('|', end='')
-    for cell in cells:
+    for cell_name in cells:
+        cell = cell_types[cell_name]
         for _ in cell.domains:
             print(' ', end='')
 
@@ -212,7 +202,7 @@ def print_register(register):
     previous_domains = 0
     print('|', end='')
     for cell_index in range(len(cells)):
-        cell = cells[cell_index]
+        cell = cell_types[cells[cell_index]]
         intersecting_coverings = []
         for i in range(current_strand_index, len(coverings)):
             if register.cell_intersects_strand(cell_index, i):
@@ -256,7 +246,7 @@ def print_register(register):
     current_strand_index = 0
     print('|', end='')
     for cell_index in range(len(cells)):
-        cell = cells[cell_index]
+        cell = cell_types[cells[cell_index]]
         intersecting_coverings = []
         for i in range(current_strand_index, len(coverings)):
             if register.cell_intersects_strand(cell_index, i):
