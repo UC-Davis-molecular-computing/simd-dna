@@ -53,20 +53,20 @@ class Register:
 
     def get_cell_at_domain_index(self, domain_index):
         total_domains = 0
-        for i in range(len(self.cells)):
-            cell = cell_types[self.cells[i]]
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
             if total_domains <= domain_index < total_domains + len(cell.domains):
-                return i, domain_index - total_domains
+                return cell, domain_index - total_domains
             total_domains += len(cell.domains)
 
-        return len(self.cells), 0
+        return None, 0
 
     def get_coverings_at_domain_index(self, domain_index):
         coverings = []
-        cell_index, offset = self.get_cell_at_domain_index(domain_index)
-        if cell_index == len(self.cells):
+        cell, offset = self.get_cell_at_domain_index(domain_index)
+        if cell is None:
             return coverings
-        domain_label = cell_types[self.cells[cell_index]].domains[offset]
+        domain_label = cell.domains[offset]
 
         for covering in self.coverings:
             start_index = covering['start_index']
@@ -77,28 +77,39 @@ class Register:
 
         return coverings
 
-    def attempt_displacement(self, cell_index, strand_type, offset):
-        if cell_index < 0:
-            cell_index = len(self.cells) + cell_index
-        cell = cell_types[self.cells[cell_index]]
+    def attempt_displacement(self, domain_index, strand_type):
+        if domain_index < 0:
+            total_domains = 0
+            for cell_name in self.cells:
+                total_domains += len(cell_types[cell_name].domains)
+
+            domain_index += total_domains
         strand = strand_types[strand_type]
 
         if strand.is_complementary:
-            return
+            pass
+        else:
+            has_open_toehold = False
+            for i in range(len(strand.domains)):
+                coverings = self.get_coverings_at_domain_index(domain_index + i)
+                if len(coverings) == 0:
+                    cell, offset = self.get_cell_at_domain_index(domain_index + i)
+                    if cell.domains[offset] == strand.domains[i]:
+                        has_open_toehold = True
 
-        # must have at least two matching domains to attach
-        matches = 0
-        for dom1, dom2 in itertools.zip_longest(strand.domains, cell.domains[offset:]):
-            matches += 1 if dom1 == dom2 else 0
+            if has_open_toehold:
+                # must have at least two matching domains to attach
+                matchings = 0
+                for i in range(len(strand.domains)):
+                    cell, offset = self.get_cell_at_domain_index(domain_index + i)
+                    if cell.domains[offset] == strand.domains[i]:
+                        matchings += 1
 
-        # todo: handle displacement
-        if matches >= 2:
-            total_domains = 0
-            for i in range(cell_index):
-                total_domains += len(cell_types[self.cells[i]].domains)
-
-            self.coverings.append({'start_index': total_domains + offset, 'strand': strand})
-            self.coverings.sort(key=lambda x: x['start_index'])
+                if matchings >= 2:
+                    new_covering = {'start_index': domain_index, 'strand': strand}
+                    self.coverings.append(new_covering)
+                    self.coverings.sort(key=lambda x: x['start_index'])
+                    self.displace_strands(new_covering)
 
     def cell_intersects_strand(self, cell_index, covering_index):
         if covering_index >= len(self.coverings):
@@ -130,10 +141,14 @@ class Register:
         domain2 = covering['strand'].domains[strand_index]
         is_last = strand_index + 1 == len(covering['strand'].domains)
 
-        return (domain1 == domain2, is_last)
+        return domain1 == domain2, is_last
 
-    def apply_instruction(self, instruction):
-        pass
+    def displace_strands(self, new_covering):
+        for covering in self.coverings:
+            if covering == new_covering:
+                continue
+
+            # do stuff here
 
     @staticmethod
     def decode_json(name, cells, coverings):
@@ -164,6 +179,10 @@ def add_cells_to_register():
     current_register = registers[register_name]
 
     cell_name = input('Enter the cell name: ')
+    if cell_name not in cell_types.keys():
+        print('No such cell exists')
+        return
+
     copies = int(input('Enter the number of copies of each cell: '))
 
     for _ in range(copies):
@@ -174,13 +193,13 @@ def add_cells_to_register():
         return
 
     coverings = coverings.split(';')
-
-    for i in range(-1, -len(coverings) - 1, -1):
+    cell_size = len(cell_types[cell_name].domains)
+    for i in range(0, -copies, -1):
         for covering in coverings:
             data = covering.split(',')
-            strand_name = data[0]
+            strand_type = data[0]
             offset = int(data[1])
-            current_register.attempt_displacement(i, strand_name, offset)
+            current_register.attempt_displacement(cell_size * (i - 1) + offset, strand_type)
 
 
 def add_strand_type():
