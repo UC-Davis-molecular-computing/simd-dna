@@ -1,5 +1,4 @@
 import copy
-import itertools
 import sys
 import json
 from json import JSONEncoder
@@ -43,8 +42,7 @@ class Cell:
 
 class Register:
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.cells = []
         self.coverings = []
 
@@ -94,7 +92,7 @@ class Register:
                 coverings = self.get_coverings_at_domain_index(domain_index + i)
                 if len(coverings) == 0:
                     cell, offset = self.get_cell_at_domain_index(domain_index + i)
-                    if cell.domains[offset] == strand.domains[i]:
+                    if cell is not None and cell.domains[offset] == strand.domains[i]:
                         has_open_toehold = True
 
             if has_open_toehold:
@@ -102,50 +100,15 @@ class Register:
                 matchings = 0
                 for i in range(len(strand.domains)):
                     cell, offset = self.get_cell_at_domain_index(domain_index + i)
-                    if cell.domains[offset] == strand.domains[i]:
+                    if cell is not None and cell.domains[offset] == strand.domains[i]:
                         matchings += 1
 
                 if matchings >= 2:
                     new_covering = {'start_index': domain_index, 'strand_name': strand_type}
-                    self.coverings.append(new_covering)
-                    self.displace_strands()
-                    self.coverings.sort(key=lambda x: x['start_index'])
+                    self.displace_strands(new_covering)
 
-    def cell_intersects_strand(self, cell_index, covering_index):
-        if covering_index >= len(self.coverings):
-            return False
-
-        cell_start = 0
-        for i in range(cell_index):
-            cell_start += len(cell_types[self.cells[i]].domains)
-
-        cell_end = cell_start + len(cell_types[self.cells[cell_index]].domains)
-        covering_start = self.coverings[covering_index]['start_index']
-        strand = strand_types[self.coverings[covering_index]['strand_name']]
-        covering_end = covering_start + len(strand.domains)
-
-        return covering_end >= cell_start and covering_start < cell_end
-
-    def cell_matches_strand_domain(self, cell_index, covering_index, domain_index):
-        domain1 = cell_types[self.cells[cell_index]].domains[domain_index]
-
-        covering = self.coverings[covering_index]
-        cell_start = 0
-        for i in range(cell_index):
-            cell_start += len(cell_types[self.cells[i]].domains)
-
-        offset = cell_start - covering['start_index']
-        strand = strand_types[covering['strand_name']]
-        if domain_index + offset < 0 or domain_index + offset >= len(strand.domains):
-            return None
-
-        strand_index = domain_index + offset
-        domain2 = strand.domains[strand_index]
-        is_last = strand_index + 1 == len(strand.domains)
-
-        return domain1 == domain2, is_last
-
-    def displace_strands(self):
+    def displace_strands(self, new_covering):
+        self.coverings.append(new_covering)
         new_strand_start = self.coverings[-1]['start_index']
         new_strand = strand_types[self.coverings[-1]['strand_name']]
         new_strand_end = new_strand_start + len(new_strand.domains)
@@ -176,10 +139,16 @@ class Register:
 
         if insecure_domains >= new_strand_end - new_strand_start - 1:
             self.coverings.pop(-1)
+            displacement_succeeded = False
+        else:
+            displacement_succeeded = True
+
+        self.coverings.sort(key=lambda x: x['start_index'])
+        return displacement_succeeded
 
     @staticmethod
-    def decode_json(name, cells, coverings):
-        self = Register(name)
+    def decode_json(cells, coverings):
+        self = Register()
         self.cells = cells
 
         self.coverings = []
@@ -201,7 +170,7 @@ def add_cells_to_register():
 
     register_name = input('Enter register name: ')
     if register_name not in registers:
-        registers[register_name] = Register(register_name)
+        registers[register_name] = Register()
 
     current_register = registers[register_name]
 
@@ -239,20 +208,43 @@ def add_strand_type():
 
 def add_instruction():
     instruction = []
-    instruction_strands = input('Enter the strand names, separated by commas: ').split(',')
-
-    for strand in instruction_strands:
-        instruction.append({'strand': strand})
+    num_instructions = int(input('Enter the number of instruction strands: '))
+    for _ in range(num_instructions):
+        strand_name = input('Enter the strand name: ')
+        instruction.append(strand_name)
 
     instructions.append(instruction)
 
 
 def run_simulation():
     register_copies = copy.deepcopy(registers)
-    for register in register_copies.values():
+    for register_key in register_copies.keys():
+        print(register_key)
+        register = register_copies[register_key]
         print_register(register)
         print()
-    input('Press any key to continue\n')
+        input('Press any key to continue')
+
+        total_domains = 0
+        for cell_name in register.cells:
+            total_domains += len(cell_types[cell_name].domains)
+
+        for inst in instructions:
+            for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
+                for strand_name in inst:
+                    displacement_succeeded = True
+                    while displacement_succeeded:
+                        for i in range(total_domains):
+                            success = register.attempt_displacement(i, strand_name)
+                            if success:
+                                break
+
+                            if i == total_domains - 1:
+                                displacement_succeeded = False
+
+            print_register(register)
+            print()
+            input('Press any key to continue')
 
 
 def print_register(register):
