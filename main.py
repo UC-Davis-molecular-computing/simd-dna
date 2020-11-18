@@ -75,7 +75,7 @@ class Register:
 
         return coverings
 
-    def attempt_displacement(self, domain_index, strand_type):
+    def attempt_attachment(self, domain_index, strand_type):
         if domain_index < 0:
             total_domains = 0
             for cell_name in self.cells:
@@ -125,46 +125,33 @@ class Register:
 
                 if matchings >= 2:
                     new_covering = {'start_index': domain_index, 'strand_name': strand_type}
-                    self.displace_strands(new_covering)
+                    self.coverings.append(new_covering)
+                    self.coverings.sort(key=lambda x: x['start_index'])
+                    return new_covering
 
-    def displace_strands(self, new_covering):
-        self.coverings.append(new_covering)
-        new_strand_start = self.coverings[-1]['start_index']
-        new_strand = strand_types[self.coverings[-1]['strand_name']]
-        new_strand_end = new_strand_start + len(new_strand.domains)
+        return None
+
+    def displace_strands(self, coverings=[]):
         displaced_strands = []
-        for covering in self.coverings[:-1]:
+        coverings = [x for x in self.coverings if x not in coverings]
+
+        for covering in coverings:
             strand_start = covering['start_index']
             strand = strand_types[covering['strand_name']]
             strand_end = strand_start + len(strand.domains)
-            if new_strand_end >= strand_start and new_strand_start < strand_end:
-                insecure_domains = 0
-                for i in range(strand_start, strand_end):
-                    coverings_at_domain = self.get_coverings_at_domain_index(i)
-                    if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
-                        insecure_domains += 1
+            insecure_domains = 0
+            for i in range(strand_start, strand_end):
+                coverings_at_domain = self.get_coverings_at_domain_index(i)
+                if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
+                    insecure_domains += 1
 
-                if insecure_domains >= strand_end - strand_start - 1:
-                    displaced_strands.append(covering)
+            if insecure_domains >= strand_end - strand_start - 1:
+                displaced_strands.append(covering)
 
         if len(displaced_strands) > 0:
             self.coverings = [x for x in self.coverings if x not in displaced_strands]
 
-        # check if the new strand still stably binds
-        insecure_domains = 0
-        for i in range(new_strand_start, new_strand_end):
-            coverings_at_domain = self.get_coverings_at_domain_index(i)
-            if len(coverings_at_domain) > 1 or self.coverings[-1] not in coverings_at_domain:
-                insecure_domains += 1
-
-        if insecure_domains >= new_strand_end - new_strand_start - 1:
-            self.coverings.pop(-1)
-            displacement_succeeded = False
-        else:
-            displacement_succeeded = True
-
-        self.coverings.sort(key=lambda x: x['start_index'])
-        return displacement_succeeded
+        return displaced_strands
 
     def print(self):
         print('|', end='')
@@ -280,7 +267,7 @@ def add_cells_to_register():
             data = covering.split(',')
             strand_type = data[0]
             offset = int(data[1])
-            current_register.attempt_displacement(-cell_size + offset, strand_type)
+            current_register.attempt_attachment(-cell_size + offset, strand_type)
 
 
 def add_strand_type():
@@ -317,16 +304,24 @@ def run_simulation():
 
         for inst in instructions:
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
-                for strand_name in inst:
-                    displacement_succeeded = True
-                    while displacement_succeeded:
+                displacement_occurred = True
+                while displacement_occurred:  # Repeat in case of cascades
+                    new_attachments = []
+                    for strand_name in inst:
                         for i in range(total_domains):
-                            success = register.attempt_displacement(i, strand_name)
-                            if success:
-                                break
+                            new_attachment = register.attempt_attachment(i, strand_name)
+                            if new_attachment is not None:
+                                new_attachments.append(new_attachment)
 
-                            if i == total_domains - 1:
-                                displacement_succeeded = False
+                    # do first round of displacements preserving the new strands
+                    if len(new_attachments) > 0:
+                        register.displace_strands(new_attachments)
+                    else:
+                        displacement_occurred = False
+
+                    displaced_strands = register.displace_strands()
+                    if displaced_strands == new_attachments:  # all new strands did not stably bind
+                        displacement_occurred = False
 
             register.print()
             print()
