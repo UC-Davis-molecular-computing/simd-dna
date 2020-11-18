@@ -269,40 +269,23 @@ def print_register(register):
 
     print()
 
-    current_strand_index = 0
     previous_domains = 0
     print('|', end='')
-    for cell_index in range(len(cells)):
-        cell = cell_types[cells[cell_index]]
-        intersecting_coverings = []
-        for i in range(current_strand_index, len(coverings)):
-            if register.cell_intersects_strand(cell_index, i):
-                intersecting_coverings.append(i)
-            else:
-                break
-
-        if len(intersecting_coverings) > 0:
-            for domain_index in range(len(cell.domains)):
-                matchings = list(map(lambda x: register.cell_matches_strand_domain(cell_index, x, domain_index),
-                                     intersecting_coverings))
-                mismatches = 0
-                matches = 0
-                for matching in matchings:
-                    if matching is not None:
-                        if matching[0]:
-                            matches += 1
-                        else:
-                            mismatches += 1
-
-                if mismatches >= 1 or matches >= 2:
-                    print('↗', end='')
-                else:
-                    print(' ', end='')
-
-            current_strand_index += len(intersecting_coverings) - 1
-        else:
-            for _ in cell.domains:
+    for cell_name in cells:
+        cell = cell_types[cell_name]
+        for i in range(len(cell.domains)):
+            coverings = register.get_coverings_at_domain_index(previous_domains + i)
+            if len(coverings) == 0:
                 print(' ', end='')
+            elif len(coverings) == 1:
+                strand = strand_types[coverings[0]['strand_name']]
+                index = previous_domains + i - coverings[0]['start_index']
+                if cell.domains[i] == strand.domains[index]:
+                    print(' ', end='')
+                else:
+                    print('↗', end='')
+            else:
+                print('↗', end='')
 
         print('|', end='')
         previous_domains += len(cell.domains)
@@ -315,47 +298,29 @@ def print_register(register):
 
     print()
 
-    current_strand_index = 0
+    previous_domains = 0
     print('|', end='')
-    for cell_index in range(len(cells)):
-        cell = cell_types[cells[cell_index]]
-        intersecting_coverings = []
-        for i in range(current_strand_index, len(coverings)):
-            if register.cell_intersects_strand(cell_index, i):
-                intersecting_coverings.append(i)
-            else:
-                break
-
-        if len(intersecting_coverings) > 0:
-            for domain_index in range(len(cell.domains)):
-                matchings = list(map(lambda x: register.cell_matches_strand_domain(cell_index, x, domain_index),
-                                     intersecting_coverings))
-                matches = 0
-                for matching in matchings:
-                    if matching is not None and matching[0]:
-                        matches += 1
-
-                if matches == 0:
-                    print('□', end='')
-                elif matches == 1:
-                    for i in range(len(matchings)):
-                        if matchings[i] is not None and matchings[i][0]:
-                            is_last = matchings[i][1]
-                            break
-
-                    if is_last:
-                        print('>', end='')
-                    else:
+    for cell_name in cells:
+        cell = cell_types[cell_name]
+        for i in range(len(cell.domains)):
+            coverings = register.get_coverings_at_domain_index(previous_domains + i)
+            if len(coverings) == 0:
+                print('□', end='')
+            elif len(coverings) == 1:
+                strand = strand_types[coverings[0]['strand_name']]
+                index = previous_domains + i - coverings[0]['start_index']
+                if cell.domains[i] == strand.domains[index]:
+                    if index < len(strand.domains) - 1:
                         print('=', end='')
+                    else:
+                        print('>', end='')
                 else:
                     print('⭜', end='')
-
-            current_strand_index += len(intersecting_coverings) - 1
-        else:
-            for _ in cell.domains:
-                print('□', end='')
+            else:
+                print('⭜', end='')
 
         print('|', end='')
+        previous_domains += len(cell.domains)
 
     print()
 
