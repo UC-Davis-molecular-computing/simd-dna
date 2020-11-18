@@ -108,8 +108,8 @@ class Register:
                 if matchings >= 2:
                     new_covering = {'start_index': domain_index, 'strand_name': strand_type}
                     self.coverings.append(new_covering)
+                    self.displace_strands()
                     self.coverings.sort(key=lambda x: x['start_index'])
-                    self.displace_strands(new_covering)
 
     def cell_intersects_strand(self, cell_index, covering_index):
         if covering_index >= len(self.coverings):
@@ -124,7 +124,7 @@ class Register:
         strand = strand_types[self.coverings[covering_index]['strand_name']]
         covering_end = covering_start + len(strand.domains)
 
-        return covering_end >= cell_start and covering_start <= cell_end
+        return covering_end >= cell_start and covering_start < cell_end
 
     def cell_matches_strand_domain(self, cell_index, covering_index, domain_index):
         domain1 = cell_types[self.cells[cell_index]].domains[domain_index]
@@ -145,12 +145,37 @@ class Register:
 
         return domain1 == domain2, is_last
 
-    def displace_strands(self, new_covering):
-        for covering in self.coverings:
-            if covering == new_covering:
-                continue
+    def displace_strands(self):
+        new_strand_start = self.coverings[-1]['start_index']
+        new_strand = strand_types[self.coverings[-1]['strand_name']]
+        new_strand_end = new_strand_start + len(new_strand.domains)
+        displaced_strands = []
+        for covering in self.coverings[:-1]:
+            strand_start = covering['start_index']
+            strand = strand_types[covering['strand_name']]
+            strand_end = strand_start + len(strand.domains)
+            if new_strand_end >= strand_start and new_strand_start < strand_end:
+                insecure_domains = 0
+                for i in range(strand_start, strand_end):
+                    coverings_at_domain = self.get_coverings_at_domain_index(i)
+                    if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
+                        insecure_domains += 1
 
-            # do stuff here
+                if insecure_domains >= strand_end - strand_start - 1:
+                    displaced_strands.append(covering)
+
+        if len(displaced_strands) > 0:
+            self.coverings = [x for x in self.coverings if x not in displaced_strands]
+
+        # check if the new strand still stably binds
+        insecure_domains = 0
+        for i in range(new_strand_start, new_strand_end):
+            coverings_at_domain = self.get_coverings_at_domain_index(i)
+            if len(coverings_at_domain) > 1 or self.coverings[-1] not in coverings_at_domain:
+                insecure_domains += 1
+
+        if insecure_domains >= new_strand_end - new_strand_start - 1:
+            self.coverings.pop(-1)
 
     @staticmethod
     def decode_json(name, cells, coverings):
@@ -186,22 +211,21 @@ def add_cells_to_register():
         return
 
     copies = int(input('Enter the number of copies of each cell: '))
-
-    for _ in range(copies):
-        current_register.add_cell(cell_name)
     coverings = input('Enter initial coverings for each cell copy: ')
 
-    if coverings == "":
-        return
+    if coverings == '':
+        coverings = []
+    else:
+        coverings = coverings.split(';')
 
-    coverings = coverings.split(';')
     cell_size = len(cell_types[cell_name].domains)
-    for i in range(0, -copies, -1):
+    for _ in range(copies):
+        current_register.add_cell(cell_name)
         for covering in coverings:
             data = covering.split(',')
             strand_type = data[0]
             offset = int(data[1])
-            current_register.attempt_displacement(cell_size * (i - 1) + offset, strand_type)
+            current_register.attempt_displacement(-cell_size + offset, strand_type)
 
 
 def add_strand_type():
