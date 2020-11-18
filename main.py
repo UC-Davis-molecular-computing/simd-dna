@@ -85,7 +85,27 @@ class Register:
         strand = strand_types[strand_type]
 
         if strand.is_complementary:
-            pass
+            displaced_strands = []
+            for covering in self.coverings:
+                top_strand = strand_types[covering['strand_name']]
+                is_match = True
+                for i in range(len(top_strand.domains)):
+                    if strand.domains[i] != top_strand.domains[i]:
+                        is_match = False
+                        break
+
+                if is_match:
+                    strand_start = covering['start_index']
+                    strand_end = strand_start + len(top_strand.domains)
+                    for i in range(strand_start, strand_end):
+                        coverings_at_domain = self.get_coverings_at_domain_index(i)
+                        # must have at least one insecure domain
+                        if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
+                            displaced_strands.append(covering)
+                            break
+
+            if len(displaced_strands) > 0:
+                self.coverings = [x for x in self.coverings if x not in displaced_strands]
         else:
             has_open_toehold = False
             for i in range(len(strand.domains)):
