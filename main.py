@@ -302,7 +302,8 @@ def run_simulation():
         for cell_name in register.cells:
             total_domains += len(cell_types[cell_name].domains)
 
-        for inst in instructions:
+        for inst_num in range(len(instructions)):
+            inst = instructions[inst_num]
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
                 displacement_occurred = True
                 while displacement_occurred:  # Repeat in case of cascades
@@ -323,6 +324,7 @@ def run_simulation():
                     if displaced_strands == new_attachments:  # all new strands did not stably bind
                         displacement_occurred = False
 
+            print("Instruction", inst_num + 1)
             register.print()
             print()
             input('Press any key to continue')
@@ -337,6 +339,7 @@ def save_data():
             'registers': registers,
             'instructions': instructions
         }, file, indent=4, cls=ObjectEncoder)
+        file.flush()
 
 
 def exit_loop():
