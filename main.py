@@ -17,26 +17,24 @@ class ObjectEncoder(JSONEncoder):
 
 class Strand:
 
-    def __init__(self, name, domains, is_complementary):
-        self.name = name
+    def __init__(self, domains, is_complementary):
         self.domains = domains
         self.is_complementary = is_complementary
 
     @staticmethod
-    def decode_json(name, domains, is_complementary):
-        self = Strand(name, domains, is_complementary)
+    def decode_json(domains, is_complementary):
+        self = Strand(domains, is_complementary)
         return self
 
 
 class Cell:
 
-    def __init__(self, name, domains):
-        self.name = name
+    def __init__(self, domains):
         self.domains = domains
 
     @staticmethod
-    def decode_json(name, domains):
-        self = Cell(name, domains)
+    def decode_json(domains):
+        self = Cell(domains)
         return self
 
 
@@ -235,7 +233,7 @@ def add_cell_type():
     name = input('Enter cell type name: ')
     domains = input('Enter domain names, separated by commas: ').split(',')
     if name not in cell_types.keys():
-        cell_types[name] = Cell(name, domains)
+        cell_types[name] = Cell(domains)
 
 
 def add_cells_to_register():
@@ -276,7 +274,7 @@ def add_strand_type():
     domains = input('Enter domains separated by commas: ').split(',')
     is_complementary = input('Is the strand complementary to the top strand? Y or N? ')
 
-    strand_types[name] = Strand(name, domains, True if is_complementary.lower() == 'y' else False)
+    strand_types[name] = Strand(domains, True if is_complementary.lower() == 'y' else False)
 
 
 def add_instruction():

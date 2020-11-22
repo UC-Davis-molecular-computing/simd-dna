@@ -1,0 +1,517 @@
+{
+    "cell_types": {
+        "Bit": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ]
+        },
+        "Parity": {
+            "domains": [
+                "6",
+                "7",
+                "8",
+                "9"
+            ]
+        }
+    },
+    "strand_types": {
+        "One-first": {
+            "domains": [
+                "1",
+                "2"
+            ],
+            "is_complementary": false
+        },
+        "One-second": {
+            "domains": [
+                "3",
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "Zero-first": {
+            "domains": [
+                "1",
+                "2",
+                "3"
+            ],
+            "is_complementary": false
+        },
+        "Zero-second": {
+            "domains": [
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "Even-indicator": {
+            "domains": [
+                "8",
+                "9"
+            ],
+            "is_complementary": false
+        },
+        "Odd-indicator": {
+            "domains": [
+                "6",
+                "7"
+            ],
+            "is_complementary": false
+        },
+        "1": {
+            "domains": [
+                "6",
+                "7",
+                "10"
+            ],
+            "is_complementary": false
+        },
+        "2A": {
+            "domains": [
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "11"
+            ],
+            "is_complementary": false
+        },
+        "2B": {
+            "domains": [
+                "5",
+                "1",
+                "2",
+                "3",
+                "4",
+                "11"
+            ],
+            "is_complementary": false
+        },
+        "3": {
+            "domains": [
+                "3",
+                "4",
+                "5"
+            ],
+            "is_complementary": true
+        },
+        "4": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "11"
+            ],
+            "is_complementary": false
+        },
+        "5": {
+            "domains": [
+                "6",
+                "7",
+                "10"
+            ],
+            "is_complementary": true
+        },
+        "6A": {
+            "domains": [
+                "3",
+                "4",
+                "5",
+                "6",
+                "10"
+            ],
+            "is_complementary": false
+        },
+        "6B": {
+            "domains": [
+                "3",
+                "4",
+                "5",
+                "1",
+                "10"
+            ],
+            "is_complementary": false
+        },
+        "7": {
+            "domains": [
+                "1",
+                "2",
+                "3"
+            ],
+            "is_complementary": true
+        },
+        "8": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "9": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "10A": {
+            "domains": [
+                "6",
+                "7",
+                "8",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "11": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "12A": {
+            "domains": [
+                "3",
+                "4",
+                "5",
+                "6",
+                "10"
+            ],
+            "is_complementary": true
+        },
+        "12B": {
+            "domains": [
+                "3",
+                "4",
+                "5",
+                "1",
+                "10"
+            ],
+            "is_complementary": true
+        },
+        "15A": {
+            "domains": [
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "11"
+            ],
+            "is_complementary": true
+        },
+        "15B": {
+            "domains": [
+                "5",
+                "1",
+                "2",
+                "3",
+                "4",
+                "11"
+            ],
+            "is_complementary": true
+        },
+        "17": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "19": {
+            "domains": [
+                "6",
+                "7",
+                "8",
+                "12"
+            ],
+            "is_complementary": true
+        }
+    },
+    "registers": {
+        "Two": {
+            "cells": [
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Parity"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 3,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 8,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 15,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 17,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 22,
+                    "strand_name": "Even-indicator"
+                }
+            ]
+        },
+        "Four": {
+            "cells": [
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Parity"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 3,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 15,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 18,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 22,
+                    "strand_name": "Even-indicator"
+                }
+            ]
+        },
+        "Three": {
+            "cells": [
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Parity"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 3,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 8,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 15,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 18,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 20,
+                    "strand_name": "Odd-indicator"
+                }
+            ]
+        },
+        "Eleven": {
+            "cells": [
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Parity"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 2,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 15,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 18,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 20,
+                    "strand_name": "Odd-indicator"
+                }
+            ]
+        }
+    },
+    "instructions": [
+        [
+            "1"
+        ],
+        [
+            "2A",
+            "2B"
+        ],
+        [
+            "3"
+        ],
+        [
+            "4"
+        ],
+        [
+            "5"
+        ],
+        [
+            "6A",
+            "6B"
+        ],
+        [
+            "7"
+        ],
+        [
+            "8"
+        ],
+        [
+            "9"
+        ],
+        [
+            "10A",
+            "One-first",
+            "One-second"
+        ],
+        [
+            "11"
+        ],
+        [
+            "12A",
+            "12B"
+        ],
+        [
+            "10A",
+            "Zero-first",
+            "Zero-second"
+        ],
+        [
+            "11"
+        ],
+        [
+            "15A",
+            "15B"
+        ],
+        [
+            "Even-indicator",
+            "1",
+            "Zero-first",
+            "Zero-second"
+        ],
+        [
+            "17"
+        ],
+        [
+            "One-first",
+            "One-second"
+        ],
+        [
+            "19"
+        ],
+        [
+            "Odd-indicator"
+        ],
+        [
+            "5"
+        ]
+    ]
+}

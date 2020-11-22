@@ -1,0 +1,174 @@
+{
+    "cell_types": {
+        "Bit": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ]
+        }
+    },
+    "strand_types": {
+        "One": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "Zero-first": {
+            "domains": [
+                "1",
+                "2",
+                "3"
+            ],
+            "is_complementary": false
+        },
+        "Zero-second": {
+            "domains": [
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "1": {
+            "domains": [
+                "4",
+                "5",
+                "1",
+                "6"
+            ],
+            "is_complementary": false
+        },
+        "2": {
+            "domains": [
+                "4",
+                "5",
+                "1",
+                "2",
+                "3",
+                "7"
+            ],
+            "is_complementary": false
+        },
+        "3": {
+            "domains": [
+                "4",
+                "5",
+                "1",
+                "2",
+                "3",
+                "7"
+            ],
+            "is_complementary": true
+        },
+        "5": {
+            "domains": [
+                "4",
+                "5",
+                "1",
+                "6"
+            ],
+            "is_complementary": true
+        }
+    },
+    "registers": {
+        "Test": {
+            "cells": [
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit",
+                "Bit"
+            ],
+            "coverings": [
+                {
+                    "start_index": 1,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 8,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 13,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 16,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 21,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 26,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 31,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 35,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 38,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 41,
+                    "strand_name": "One"
+                },
+                {
+                    "start_index": 45,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 48,
+                    "strand_name": "Zero-second"
+                }
+            ]
+        }
+    },
+    "instructions": [
+        [
+            "1"
+        ],
+        [
+            "2"
+        ],
+        [
+            "3"
+        ],
+        [
+            "Zero-first",
+            "Zero-second"
+        ],
+        [
+            "5"
+        ],
+        [
+            "One"
+        ]
+    ]
+}
