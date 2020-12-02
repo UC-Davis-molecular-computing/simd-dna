@@ -166,7 +166,7 @@ class Register:
         return displaced_strands
 
     def print(self, new_strands=None):
-        if new_strands is not None:
+        if new_strands is not None and len(new_strands) > 0:
             previous_domains = 0
             print('|', end='')
             for cell_name in self.cells:
@@ -199,12 +199,10 @@ class Register:
                 if new_strands is None:
                     print(' ', end='')
                 else:
-                    coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
-                                                                                         include_orthogonal=True,
-                                                                                         strand_set=new_strands)
-                    if len(coverings) + len(orthogonal_coverings) == 0:
+                    coverings = self.get_coverings_at_domain_index(previous_domains + i, strand_set=new_strands)
+                    if len(coverings) == 0:
                         print(' ', end='')
-                    elif len(coverings) == 1 and len(orthogonal_coverings) == 0:
+                    elif len(coverings) == 1:
                         strand = strand_types[coverings[0]['strand_name']]
                         index = previous_domains + i - coverings[0]['start_index']
                         if strand.is_complementary:
@@ -217,12 +215,6 @@ class Register:
                                 print('=', end='')
                             else:
                                 print('>', end='')
-                    elif len(orthogonal_coverings) == 1:
-                        index = previous_domains + i - orthogonal_coverings[0]['start_index']
-                        if index == 0:
-                            print('<', end='')
-                        else:
-                            print('=', end='')
                     else:
                         print('x', end='')
 
@@ -384,7 +376,7 @@ def run_simulation():
                         new_strands.extend([strand for strand in new_attachments if strand not in displaced_strands])
 
             print("Instruction", inst_num + 1)
-            sorted(new_strands, key=lambda x: x['start_index'])
+            new_strands.sort(key=lambda x: x['start_index'])
             pre_instruction_register.print(new_strands)
             print()
 
