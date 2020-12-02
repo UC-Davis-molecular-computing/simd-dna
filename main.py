@@ -65,14 +65,22 @@ class Register:
             return coverings
         domain_label = cell.domains[offset]
 
+        if include_orthogonal:
+            orthogonal_coverings = []
+
         for covering in self.coverings:
             start_index = covering['start_index']
             strand = strand_types[covering['strand_name']]
-            if start_index <= domain_index < start_index + len(strand.domains) \
-                    and (include_orthogonal or domain_label == strand.domains[domain_index - start_index]):
-                coverings.append(covering)
+            if start_index <= domain_index < start_index + len(strand.domains):
+                if domain_label == strand.domains[domain_index - start_index]:
+                    coverings.append(covering)
+                elif include_orthogonal:
+                    orthogonal_coverings.append(covering)
 
-        return coverings
+        if include_orthogonal:
+            return coverings, orthogonal_coverings
+        else:
+            return coverings
 
     def attempt_attachment(self, domain_index, strand_type):
         if domain_index < 0:
@@ -153,9 +161,11 @@ class Register:
         return displaced_strands
 
     def print(self):
+        total_domains = 0
         print('|', end='')
         for cell_name in self.cells:
             cell = cell_types[cell_name]
+            total_domains += len(cell.domains)
             for _ in cell.domains:
                 print(' ', end='')
 
@@ -168,18 +178,12 @@ class Register:
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
-                domain_coverings = self.get_coverings_at_domain_index(previous_domains + i, include_orthogonal=True)
-                if len(domain_coverings) == 0:
-                    print(' ', end='')
-                elif len(domain_coverings) == 1:
-                    strand = strand_types[domain_coverings[0]['strand_name']]
-                    index = previous_domains + i - domain_coverings[0]['start_index']
-                    if cell.domains[i] == strand.domains[index]:
-                        print(' ', end='')
-                    else:
-                        print('↗', end='')
-                else:
+                domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
+                                                                                            include_orthogonal=True)
+                if len(orthogonal_coverings) >= 1:
                     print('↗', end='')
+                else:
+                    print(' ', end='')
 
             print('|', end='')
             previous_domains += len(cell.domains)
@@ -197,21 +201,23 @@ class Register:
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
-                coverings = self.get_coverings_at_domain_index(previous_domains + i, include_orthogonal=True)
+                coverings = self.get_coverings_at_domain_index(previous_domains + i)
+                if i + previous_domains < total_domains - 1:
+                    _, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i + 1,
+                                                                                 include_orthogonal=True)
                 if len(coverings) == 0:
                     print('□', end='')
                 elif len(coverings) == 1:
                     strand = strand_types[coverings[0]['strand_name']]
                     index = previous_domains + i - coverings[0]['start_index']
-                    if cell.domains[i] == strand.domains[index]:
-                        if index < len(strand.domains) - 1:
-                            print('=', end='')
-                        else:
-                            print('>', end='')
-                    else:
+                    if i + previous_domains < total_domains - 1 and len(orthogonal_coverings) >= 1:
                         print('⭜', end='')
+                    elif index < len(strand.domains) - 1:
+                        print('=', end='')
+                    else:
+                        print('>', end='')
                 else:
-                    print('⭜', end='')
+                    print('x', end='')
 
             print('|', end='')
             previous_domains += len(cell.domains)
