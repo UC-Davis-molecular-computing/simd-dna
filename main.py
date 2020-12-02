@@ -4,6 +4,7 @@ import json
 from json import JSONEncoder
 
 program_loop = True
+step_by_step_simulation = False
 cell_types = {}
 strand_types = {}
 registers = {}
@@ -294,7 +295,9 @@ def run_simulation():
         register = register_copies[register_key]
         register.print()
         print()
-        input('Press any key to continue')
+
+        if step_by_step_simulation:
+            input('Press Enter to continue')
 
         total_domains = 0
         for cell_name in register.cells:
@@ -325,7 +328,9 @@ def run_simulation():
             print("Instruction", inst_num + 1)
             register.print()
             print()
-            input('Press any key to continue')
+
+            if step_by_step_simulation:
+                input('Press Enter to continue')
 
 
 def save_data():
@@ -338,6 +343,11 @@ def save_data():
             'instructions': instructions
         }, file, indent=4, cls=ObjectEncoder)
         file.flush()
+
+
+def toggle_step_by_step_simulation():
+    global step_by_step_simulation
+    step_by_step_simulation = not step_by_step_simulation
 
 
 def exit_loop():
@@ -370,7 +380,8 @@ def simd_simulator(args):
                    '4': add_instruction,
                    '5': run_simulation,
                    '6': save_data,
-                   '7': exit_loop}
+                   '7': toggle_step_by_step_simulation,
+                   '8': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -380,7 +391,8 @@ def simd_simulator(args):
 4 - Add instruction
 5 - Run simulation
 6 - Save data
-7 - Exit
+7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
+'''8 - Exit
 
 ''')
 
