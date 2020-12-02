@@ -181,7 +181,7 @@ class Register:
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True)
                 if len(orthogonal_coverings) >= 1:
-                    print('↗', end='')
+                    print('^', end='')
                 else:
                     print(' ', end='')
 
@@ -192,7 +192,7 @@ class Register:
             last_covering = self.coverings[-1]
             strand = strand_types[last_covering['strand_name']]
             for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
-                print('↗', end='')
+                print('^', end='')
 
         print()
 
