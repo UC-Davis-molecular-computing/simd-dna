@@ -202,17 +202,12 @@ class Register:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
                 coverings = self.get_coverings_at_domain_index(previous_domains + i)
-                if i + previous_domains < total_domains - 1:
-                    _, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i + 1,
-                                                                                 include_orthogonal=True)
                 if len(coverings) == 0:
                     print('□', end='')
                 elif len(coverings) == 1:
                     strand = strand_types[coverings[0]['strand_name']]
                     index = previous_domains + i - coverings[0]['start_index']
-                    if i + previous_domains < total_domains - 1 and len(orthogonal_coverings) >= 1:
-                        print('⭜', end='')
-                    elif index < len(strand.domains) - 1:
+                    if index < len(strand.domains) - 1:
                         print('=', end='')
                     else:
                         print('>', end='')
