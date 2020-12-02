@@ -58,7 +58,7 @@ class Register:
 
         return None, 0
 
-    def get_coverings_at_domain_index(self, domain_index, include_orthogonal=False):
+    def get_coverings_at_domain_index(self, domain_index, include_orthogonal=False, strand_set=None):
         coverings = []
         cell, offset = self.get_cell_at_domain_index(domain_index)
         if cell is None:
@@ -68,7 +68,9 @@ class Register:
         if include_orthogonal:
             orthogonal_coverings = []
 
-        for covering in self.coverings:
+        if strand_set is None:
+            strand_set = self.coverings
+        for covering in strand_set:
             start_index = covering['start_index']
             strand = strand_types[covering['strand_name']]
             if start_index <= domain_index < start_index + len(strand.domains):
@@ -93,6 +95,7 @@ class Register:
 
         if strand.is_complementary:
             displaced_strands = []
+            displacing_strands = []
             for covering in self.coverings:
                 top_strand = strand_types[covering['strand_name']]
                 is_match = True
@@ -109,10 +112,12 @@ class Register:
                         # must have at least one insecure domain
                         if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
                             displaced_strands.append(covering)
+                            displacing_strands.append({'start_index': strand_start, 'strand_name': strand_type})
                             break
 
             if len(displaced_strands) > 0:
                 self.coverings = [x for x in self.coverings if x not in displaced_strands]
+                return displacing_strands
         else:
             has_open_toehold = False
             for i in range(len(strand.domains)):
@@ -134,7 +139,7 @@ class Register:
                     new_covering = {'start_index': domain_index, 'strand_name': strand_type}
                     self.coverings.append(new_covering)
                     self.coverings.sort(key=lambda x: x['start_index'])
-                    return new_covering
+                    return [new_covering]
 
         return None
 
@@ -160,16 +165,69 @@ class Register:
 
         return displaced_strands
 
-    def print(self):
-        total_domains = 0
+    def print(self, new_strands=None):
+        if new_strands is not None:
+            previous_domains = 0
+            print('|', end='')
+            for cell_name in self.cells:
+                cell = cell_types[cell_name]
+                for i in range(len(cell.domains)):
+                    domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
+                                                                                                include_orthogonal=True,
+                                                                                                strand_set=new_strands)
+                    if len(orthogonal_coverings) >= 1:
+                        print('^', end='')
+                    else:
+                        print(' ', end='')
+
+                print('|', end='')
+                previous_domains += len(cell.domains)
+
+            if len(new_strands) >= 1:
+                last_covering = new_strands[-1]
+                strand = strand_types[last_covering['strand_name']]
+                for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+                    print('^', end='')
+
+            print()
+
+        previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
             cell = cell_types[cell_name]
-            total_domains += len(cell.domains)
-            for _ in cell.domains:
-                print(' ', end='')
+            for i in range(len(cell.domains)):
+                if new_strands is None:
+                    print(' ', end='')
+                else:
+                    coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
+                                                                                         include_orthogonal=True,
+                                                                                         strand_set=new_strands)
+                    if len(coverings) + len(orthogonal_coverings) == 0:
+                        print(' ', end='')
+                    elif len(coverings) == 1 and len(orthogonal_coverings) == 0:
+                        strand = strand_types[coverings[0]['strand_name']]
+                        index = previous_domains + i - coverings[0]['start_index']
+                        if strand.is_complementary:
+                            if index == 0:
+                                print('<', end='')
+                            else:
+                                print('=', end='')
+                        else:
+                            if index < len(strand.domains) - 1:
+                                print('=', end='')
+                            else:
+                                print('>', end='')
+                    elif len(orthogonal_coverings) == 1:
+                        index = previous_domains + i - orthogonal_coverings[0]['start_index']
+                        if index == 0:
+                            print('<', end='')
+                        else:
+                            print('=', end='')
+                    else:
+                        print('x', end='')
 
             print('|', end='')
+            previous_domains += len(cell.domains)
 
         print()
 
@@ -188,7 +246,7 @@ class Register:
             print('|', end='')
             previous_domains += len(cell.domains)
 
-        if len(self.coverings) > 1:
+        if len(self.coverings) >= 1:
             last_covering = self.coverings[-1]
             strand = strand_types[last_covering['strand_name']]
             for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
@@ -294,18 +352,15 @@ def run_simulation():
     for register_key in register_copies.keys():
         print(register_key)
         register = register_copies[register_key]
-        register.print()
-        print()
-
-        if step_by_step_simulation:
-            input('Press Enter to continue')
 
         total_domains = 0
         for cell_name in register.cells:
             total_domains += len(cell_types[cell_name].domains)
 
         for inst_num in range(len(instructions)):
+            pre_instruction_register = copy.deepcopy(register)
             inst = instructions[inst_num]
+            new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
                 displacement_occurred = True
                 while displacement_occurred:  # Repeat in case of cascades
@@ -314,7 +369,7 @@ def run_simulation():
                         for i in range(total_domains):
                             new_attachment = register.attempt_attachment(i, strand_name)
                             if new_attachment is not None:
-                                new_attachments.append(new_attachment)
+                                new_attachments.extend(new_attachment)
 
                     # do first round of displacements preserving the new strands
                     if len(new_attachments) > 0:
@@ -325,13 +380,22 @@ def run_simulation():
                     displaced_strands = register.displace_strands()
                     if displaced_strands == new_attachments:  # all new strands did not stably bind
                         displacement_occurred = False
+                    else:
+                        new_strands.extend([strand for strand in new_attachments if strand not in displaced_strands])
 
             print("Instruction", inst_num + 1)
-            register.print()
+            sorted(new_strands, key=lambda x: x['start_index'])
+            pre_instruction_register.print(new_strands)
             print()
 
             if step_by_step_simulation:
                 input('Press Enter to continue')
+
+        print("Final result")
+        register.print()
+        print()
+        if step_by_step_simulation:
+            input('Press Enter to continue')
 
 
 def save_data():
@@ -393,7 +457,7 @@ def simd_simulator(args):
 5 - Run simulation
 6 - Save data
 7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
-'''8 - Exit
+                       '''8 - Exit
 
 ''')
 
