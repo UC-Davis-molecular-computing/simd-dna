@@ -1,0 +1,399 @@
+{
+    "cell_types": {
+        "Digit": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"
+            ]
+        },
+        "Toehold": {
+            "domains": [
+                "8"
+            ]
+        }
+    },
+    "strand_types": {
+        "Zero-first": {
+            "domains": [
+                "1",
+                "2"
+            ],
+            "is_complementary": false
+        },
+        "Zero-second": {
+            "domains": [
+                "3",
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "Zero-third": {
+            "domains": [
+                "6",
+                "7"
+            ],
+            "is_complementary": false
+        },
+        "One-first": {
+            "domains": [
+                "1",
+                "2",
+                "3"
+            ],
+            "is_complementary": false
+        },
+        "One-second": {
+            "domains": [
+                "4",
+                "5"
+            ],
+            "is_complementary": false
+        },
+        "One-third": {
+            "domains": [
+                "6",
+                "7"
+            ],
+            "is_complementary": false
+        },
+        "Two-first": {
+            "domains": [
+                "1",
+                "2",
+                "3",
+                "4"
+            ],
+            "is_complementary": false
+        },
+        "Two-second": {
+            "domains": [
+                "5",
+                "6",
+                "7"
+            ],
+            "is_complementary": false
+        },
+        "1A": {
+            "domains": [
+                "6",
+                "7",
+                "8",
+                "9"
+            ],
+            "is_complementary": false
+        },
+        "1B": {
+            "domains": [
+                "6",
+                "7",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "9"
+            ],
+            "is_complementary": false
+        },
+        "2A": {
+            "domains": [
+                "6",
+                "7",
+                "8",
+                "9"
+            ],
+            "is_complementary": true
+        },
+        "2B": {
+            "domains": [
+                "6",
+                "7",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "9"
+            ],
+            "is_complementary": true
+        },
+        "3": {
+            "domains": [
+                "6",
+                "7",
+                "9"
+            ],
+            "is_complementary": false
+        },
+        "4": {
+            "domains": [
+                "4",
+                "5",
+                "6"
+            ],
+            "is_complementary": false
+        },
+        "6": {
+            "domains": [
+                "6",
+                "7",
+                "9"
+            ],
+            "is_complementary": true
+        },
+        "9": {
+            "domains": [
+                "3",
+                "4",
+                "5"
+            ],
+            "is_complementary": true
+        },
+        "11": {
+            "domains": [
+                "4",
+                "5",
+                "6",
+                "7",
+                "9"
+            ],
+            "is_complementary": false
+        },
+        "12": {
+            "domains": [
+                "4",
+                "5",
+                "6",
+                "7",
+                "9"
+            ],
+            "is_complementary": true
+        }
+    },
+    "registers": {
+        "Two": {
+            "cells": [
+                "Digit",
+                "Digit",
+                "Digit",
+                "Toehold"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 2,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-third"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 9,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "Zero-third"
+                },
+                {
+                    "start_index": 14,
+                    "strand_name": "Two-first"
+                },
+                {
+                    "start_index": 18,
+                    "strand_name": "Two-second"
+                }
+            ]
+        },
+        "Five": {
+            "cells": [
+                "Digit",
+                "Digit",
+                "Digit",
+                "Toehold"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 2,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-third"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 10,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "One-third"
+                },
+                {
+                    "start_index": 14,
+                    "strand_name": "Two-first"
+                },
+                {
+                    "start_index": 18,
+                    "strand_name": "Two-second"
+                }
+            ]
+        },
+        "Seven": {
+            "cells": [
+                "Digit",
+                "Digit",
+                "Digit",
+                "Toehold"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 2,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "Zero-third"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "Two-first"
+                },
+                {
+                    "start_index": 11,
+                    "strand_name": "Two-second"
+                },
+                {
+                    "start_index": 14,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 17,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 19,
+                    "strand_name": "One-third"
+                }
+            ]
+        },
+        "Nine": {
+            "cells": [
+                "Digit",
+                "Digit",
+                "Digit",
+                "Toehold"
+            ],
+            "coverings": [
+                {
+                    "start_index": 0,
+                    "strand_name": "One-first"
+                },
+                {
+                    "start_index": 3,
+                    "strand_name": "One-second"
+                },
+                {
+                    "start_index": 5,
+                    "strand_name": "One-third"
+                },
+                {
+                    "start_index": 7,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 9,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 12,
+                    "strand_name": "Zero-third"
+                },
+                {
+                    "start_index": 14,
+                    "strand_name": "Zero-first"
+                },
+                {
+                    "start_index": 16,
+                    "strand_name": "Zero-second"
+                },
+                {
+                    "start_index": 19,
+                    "strand_name": "Zero-third"
+                }
+            ]
+        }
+    },
+    "instructions": [
+        [
+            "1A",
+            "1B"
+        ],
+        [
+            "2A",
+            "2B"
+        ],
+        [
+            "3"
+        ],
+        [
+            "4"
+        ],
+        [
+            "Zero-first",
+            "Zero-second",
+            "Zero-third"
+        ],
+        [
+            "6"
+        ],
+        [
+            "Two-second"
+        ],
+        [
+            "Two-first"
+        ],
+        [
+            "9"
+        ],
+        [
+            "One-first"
+        ],
+        [
+            "11"
+        ],
+        [
+            "12"
+        ],
+        [
+            "One-second",
+            "One-third"
+        ]
+    ]
+}
