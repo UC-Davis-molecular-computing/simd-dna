@@ -378,7 +378,7 @@ def run_simulation():
 
             print("Instruction", inst_num + 1)
             new_strands.sort(key=lambda x: x['start_index'])
-            if len(new_strands) == 0:
+            if len(new_strands) == 0 and inst_num > 0:
                 print('No changes\n')
             else:
                 pre_instruction_register.print(new_strands)
