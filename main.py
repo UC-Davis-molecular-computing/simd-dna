@@ -5,6 +5,7 @@ from json import JSONEncoder
 
 program_loop = True
 step_by_step_simulation = False
+keep_results = False
 cell_types = {}
 strand_types = {}
 registers = {}
@@ -176,7 +177,7 @@ class Register:
                                                                                                 include_orthogonal=True,
                                                                                                 strand_set=new_strands)
                     if len(orthogonal_coverings) >= 1:
-                        print('^', end='')
+                        print('/', end='')
                     else:
                         print(' ', end='')
 
@@ -187,7 +188,7 @@ class Register:
                 last_covering = new_strands[-1]
                 strand = strand_types[last_covering['strand_name']]
                 for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
-                    print('^', end='')
+                    print('/', end='')
 
             print()
 
@@ -231,7 +232,7 @@ class Register:
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True)
                 if len(orthogonal_coverings) >= 1:
-                    print('^', end='')
+                    print('/', end='')
                 else:
                     print(' ', end='')
 
@@ -242,7 +243,7 @@ class Register:
             last_covering = self.coverings[-1]
             strand = strand_types[last_covering['strand_name']]
             for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
-                print('^', end='')
+                print('/', end='')
 
         print()
 
@@ -377,8 +378,11 @@ def run_simulation():
 
             print("Instruction", inst_num + 1)
             new_strands.sort(key=lambda x: x['start_index'])
-            pre_instruction_register.print(new_strands)
-            print()
+            if len(new_strands) == 0:
+                print('No changes\n')
+            else:
+                pre_instruction_register.print(new_strands)
+                print()
 
             if step_by_step_simulation:
                 input('Press Enter to continue')
@@ -388,6 +392,9 @@ def run_simulation():
         print()
         if step_by_step_simulation:
             input('Press Enter to continue')
+
+        if keep_results:
+            registers[register_key] = register
 
 
 def save_data():
@@ -405,6 +412,11 @@ def save_data():
 def toggle_step_by_step_simulation():
     global step_by_step_simulation
     step_by_step_simulation = not step_by_step_simulation
+
+
+def toggle_keep_results():
+    global keep_results
+    keep_results = not keep_results
 
 
 def exit_loop():
@@ -438,7 +450,8 @@ def simd_simulator(args):
                    '5': run_simulation,
                    '6': save_data,
                    '7': toggle_step_by_step_simulation,
-                   '8': exit_loop}
+                   '8': toggle_keep_results,
+                   '9': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -449,7 +462,8 @@ def simd_simulator(args):
 5 - Run simulation
 6 - Save data
 7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
-                       '''8 - Exit
+'''8 - ''' + ('Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
+'''9 - Exit
 
 ''')
 
