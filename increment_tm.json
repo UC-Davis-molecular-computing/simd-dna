@@ -620,7 +620,7 @@
             ],
             "is_complementary": false
         },
-        "37": {
+        "36d": {
             "domains": [
                 "e2",
                 "e3",
@@ -631,7 +631,7 @@
             ],
             "is_complementary": false
         },
-        "38": {
+        "37": {
             "domains": [
                 "e2",
                 "e3",
@@ -642,7 +642,7 @@
             ],
             "is_complementary": true
         },
-        "40a": {
+        "39a": {
             "domains": [
                 "c1",
                 "c2",
@@ -653,7 +653,7 @@
             ],
             "is_complementary": false
         },
-        "40b": {
+        "39b": {
             "domains": [
                 "d3",
                 "e1",
@@ -662,7 +662,7 @@
             ],
             "is_complementary": false
         },
-        "40c": {
+        "39c": {
             "domains": [
                 "e3",
                 "1",
@@ -676,7 +676,7 @@
             ],
             "is_complementary": false
         },
-        "41a": {
+        "40a": {
             "domains": [
                 "c1",
                 "c2",
@@ -687,7 +687,7 @@
             ],
             "is_complementary": true
         },
-        "41b": {
+        "40b": {
             "domains": [
                 "d3",
                 "e1",
@@ -696,7 +696,7 @@
             ],
             "is_complementary": true
         },
-        "41c": {
+        "40c": {
             "domains": [
                 "e3",
                 "1",
@@ -1072,13 +1072,11 @@
             "36a",
             "36b",
             "36c",
+            "36d",
             "c_open"
         ],
         [
             "37"
-        ],
-        [
-            "38"
         ],
         [
             "e_final",
@@ -1087,13 +1085,13 @@
             "b_full"
         ],
         [
-            "40a",
-            "40b",
-            "40c"
+            "39a",
+            "39b",
+            "39c"
         ],
         [
-            "41a",
-            "41b",
+            "40a",
+            "40b",
             "40c"
         ],
         [
