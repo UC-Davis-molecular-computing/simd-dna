@@ -204,7 +204,16 @@ class Register:
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True)
                 if len(orthogonal_coverings) >= 1:
-                    print('/', end='')
+                    point_right = True
+                    for covering in orthogonal_coverings:
+                        if covering['start_index'] == previous_domains + i:
+                            point_right = False
+                            break
+
+                    if point_right:
+                        print('/', end='')
+                    else:
+                        print('\\', end='')
                 else:
                     print(' ', end='')
 
@@ -253,7 +262,16 @@ class Register:
                                                                                             strand_set
                                                                                             =strand_set)
                 if len(orthogonal_coverings) >= 1:
-                    print('/', end='')
+                    point_right = True
+                    for covering in orthogonal_coverings:
+                        if covering['start_index'] == previous_domains + i:
+                            point_right = False
+                            break
+
+                    if point_right:
+                        print('/', end='')
+                    else:
+                        print('\\', end='')
                 else:
                     print(' ', end='')
 
