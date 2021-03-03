@@ -709,6 +709,47 @@
                 "13"
             ],
             "is_complementary": true
+        },
+        "42a": {
+            "domains": [
+                "b2",
+                "b3",
+                "c1",
+                "c5"
+            ],
+            "is_complementary": true
+        },
+        "42b": {
+            "domains": [
+                "a2",
+                "a3",
+                "b1",
+                "b5"
+            ],
+            "is_complementary": true
+        },
+        "42c": {
+            "domains": [
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "a1",
+                "a5"
+            ],
+            "is_complementary": true
+        },
+        "42d": {
+            "domains": [
+                "e2",
+                "e3",
+                "1",
+                "2",
+                "3",
+                "12"
+            ],
+            "is_complementary": true
         }
     },
     "registers": {
@@ -1101,6 +1142,12 @@
             "symbol_123",
             "symbol_456",
             "symbol_78"
+        ],
+        [
+            "42a",
+            "42b",
+            "42c",
+            "42d"
         ],
         [
             "a_restart",

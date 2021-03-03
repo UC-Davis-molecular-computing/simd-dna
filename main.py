@@ -6,6 +6,7 @@ from json import JSONEncoder
 program_loop = True
 step_by_step_simulation = False
 keep_results = False
+show_unused_instruction_strands = False
 cell_types = {}
 strand_types = {}
 registers = {}
@@ -85,7 +86,7 @@ class Register:
         else:
             return coverings
 
-    def attempt_attachment(self, domain_index, strand_type):
+    def attempt_attachment(self, domain_index, strand_type, unattached_matches=None):
         if domain_index < 0:
             total_domains = 0
             for cell_name in self.cells:
@@ -128,7 +129,7 @@ class Register:
                     if cell is not None and cell.domains[offset] == strand.domains[i]:
                         has_open_toehold = True
 
-            if has_open_toehold:
+            if has_open_toehold or unattached_matches is not None:
                 # must have at least two matching domains to attach
                 matchings = 0
                 for i in range(len(strand.domains)):
@@ -138,9 +139,15 @@ class Register:
 
                 if matchings >= 2:
                     new_covering = {'start_index': domain_index, 'strand_name': strand_type}
-                    self.coverings.append(new_covering)
-                    self.coverings.sort(key=lambda x: x['start_index'])
-                    return [new_covering]
+                    if has_open_toehold:
+                        self.coverings.append(new_covering)
+                        self.coverings.sort(key=lambda x: x['start_index'])
+                        return [new_covering]
+                    else:
+                        if new_covering not in unattached_matches:
+                            unattached_matches.append(new_covering)
+                            unattached_matches.sort(key=lambda x: x['start_index'])
+                        return None
 
         return None
 
@@ -166,63 +173,24 @@ class Register:
 
         return displaced_strands
 
-    def print(self, new_strands=None):
+    def print(self, new_strands=None, unused_strands=None):
+        if unused_strands is not None and len(unused_strands) > 0:
+            self.print_floating_strands(unused_strands)
+
         if new_strands is not None and len(new_strands) > 0:
+            self.print_floating_strands(new_strands)
+        else:
             previous_domains = 0
             print('|', end='')
             for cell_name in self.cells:
                 cell = cell_types[cell_name]
                 for i in range(len(cell.domains)):
-                    domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
-                                                                                                include_orthogonal=True,
-                                                                                                strand_set=new_strands)
-                    if len(orthogonal_coverings) >= 1:
-                        print('/', end='')
-                    else:
-                        print(' ', end='')
+                    print(' ', end='')
 
                 print('|', end='')
                 previous_domains += len(cell.domains)
 
-            if len(new_strands) >= 1:
-                last_covering = new_strands[-1]
-                strand = strand_types[last_covering['strand_name']]
-                for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
-                    print('/', end='')
-
             print()
-
-        previous_domains = 0
-        print('|', end='')
-        for cell_name in self.cells:
-            cell = cell_types[cell_name]
-            for i in range(len(cell.domains)):
-                if new_strands is None:
-                    print(' ', end='')
-                else:
-                    coverings = self.get_coverings_at_domain_index(previous_domains + i, strand_set=new_strands)
-                    if len(coverings) == 0:
-                        print(' ', end='')
-                    elif len(coverings) == 1:
-                        strand = strand_types[coverings[0]['strand_name']]
-                        index = previous_domains + i - coverings[0]['start_index']
-                        if strand.is_complementary:
-                            if index == 0:
-                                print('<', end='')
-                            else:
-                                print('=', end='')
-                        else:
-                            if index < len(strand.domains) - 1:
-                                print('=', end='')
-                            else:
-                                print('>', end='')
-                    else:
-                        print('x', end='')
-
-            print('|', end='')
-            previous_domains += len(cell.domains)
-
-        print()
 
         previous_domains = 0
         print('|', end='')
@@ -262,6 +230,61 @@ class Register:
                         print('=', end='')
                     else:
                         print('>', end='')
+                else:
+                    print('x', end='')
+
+            print('|', end='')
+            previous_domains += len(cell.domains)
+
+        print()
+
+    def print_floating_strands(self, strand_set):
+        previous_domains = 0
+        print('|', end='')
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
+            for i in range(len(cell.domains)):
+                domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
+                                                                                            include_orthogonal=True,
+                                                                                            strand_set
+                                                                                            =strand_set)
+                if len(orthogonal_coverings) >= 1:
+                    print('/', end='')
+                else:
+                    print(' ', end='')
+
+            print('|', end='')
+            previous_domains += len(cell.domains)
+
+        if len(strand_set) >= 1:
+            last_covering = strand_set[-1]
+            strand = strand_types[last_covering['strand_name']]
+            for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+                print('/', end='')
+
+        print()
+
+        previous_domains = 0
+        print('|', end='')
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
+            for i in range(len(cell.domains)):
+                coverings = self.get_coverings_at_domain_index(previous_domains + i, strand_set=strand_set)
+                if len(coverings) == 0:
+                    print(' ', end='')
+                elif len(coverings) == 1:
+                    strand = strand_types[coverings[0]['strand_name']]
+                    index = previous_domains + i - coverings[0]['start_index']
+                    if strand.is_complementary:
+                        if index == 0:
+                            print('<', end='')
+                        else:
+                            print('=', end='')
+                    else:
+                        if index < len(strand.domains) - 1:
+                            print('=', end='')
+                        else:
+                            print('>', end='')
                 else:
                     print('x', end='')
 
@@ -351,6 +374,11 @@ def run_simulation():
             total_domains += len(cell_types[cell_name].domains)
 
         for inst_num in range(len(instructions)):
+            if show_unused_instruction_strands:
+                unattached_matches = []
+            else:
+                unattached_matches = None
+
             pre_instruction_register = copy.deepcopy(register)
             inst = instructions[inst_num]
             new_strands = []
@@ -360,7 +388,7 @@ def run_simulation():
                     new_attachments = []
                     for strand_name in inst:
                         for i in range(total_domains):
-                            new_attachment = register.attempt_attachment(i, strand_name)
+                            new_attachment = register.attempt_attachment(i, strand_name, unattached_matches)
                             if new_attachment is not None:
                                 new_attachments.extend(new_attachment)
 
@@ -378,10 +406,13 @@ def run_simulation():
 
             print("Instruction", inst_num + 1)
             new_strands.sort(key=lambda x: x['start_index'])
-            if len(new_strands) == 0 and inst_num > 0:
+            if unattached_matches is not None:
+                unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
+
+            if (len(new_strands) == 0 and (unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
                 print('No changes\n')
             else:
-                pre_instruction_register.print(new_strands)
+                pre_instruction_register.print(new_strands, unattached_matches)
                 print()
 
             if step_by_step_simulation:
@@ -419,6 +450,11 @@ def toggle_keep_results():
     keep_results = not keep_results
 
 
+def toggle_show_unused_instruction_strands():
+    global show_unused_instruction_strands
+    show_unused_instruction_strands = not show_unused_instruction_strands
+
+
 def exit_loop():
     global program_loop
     program_loop = False
@@ -451,7 +487,8 @@ def simd_simulator(args):
                    '6': save_data,
                    '7': toggle_step_by_step_simulation,
                    '8': toggle_keep_results,
-                   '9': exit_loop}
+                   '9': toggle_show_unused_instruction_strands,
+                   '10': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -463,7 +500,9 @@ def simd_simulator(args):
 6 - Save data
 7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
 '''8 - ''' + ('Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
-'''9 - Exit
+'''9 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
+              else 'Show unused instruction strands\n') +
+'''10 - Exit
 
 ''')
 
