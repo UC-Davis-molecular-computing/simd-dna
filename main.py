@@ -120,6 +120,18 @@ class Register:
             if len(displaced_strands) > 0:
                 self.coverings = [x for x in self.coverings if x not in displaced_strands]
                 return displacing_strands
+            elif unattached_matches is not None:
+                matchings = 0
+                for i in range(len(strand.domains)):
+                    cell, offset = self.get_cell_at_domain_index(domain_index + i)
+                    if cell is not None and cell.domains[offset] == strand.domains[i]:
+                        matchings += 1
+
+                if matchings >= 1:
+                    new_strand = {'start_index': domain_index, 'strand_name': strand_type}
+                    if new_strand not in unattached_matches:
+                        unattached_matches.append(new_strand)
+                        unattached_matches.sort(key=lambda x: x['start_index'])
         else:
             has_open_toehold = False
             for i in range(len(strand.domains)):
@@ -175,22 +187,14 @@ class Register:
 
     def print(self, new_strands=None, unused_strands=None):
         if unused_strands is not None and len(unused_strands) > 0:
-            self.print_floating_strands(unused_strands)
+            self._print_floating_strands(unused_strands)
 
         if new_strands is not None and len(new_strands) > 0:
-            self.print_floating_strands(new_strands)
+            self._print_floating_strands(new_strands)
+        elif unused_strands is not None and len(unused_strands) > 0:
+            self._print_empty_layer('-')
         else:
-            previous_domains = 0
-            print('|', end='')
-            for cell_name in self.cells:
-                cell = cell_types[cell_name]
-                for i in range(len(cell.domains)):
-                    print(' ', end='')
-
-                print('|', end='')
-                previous_domains += len(cell.domains)
-
-            print()
+            self._print_empty_layer()
 
         previous_domains = 0
         print('|', end='')
@@ -238,7 +242,7 @@ class Register:
 
         print()
 
-    def print_floating_strands(self, strand_set):
+    def _print_floating_strands(self, strand_set):
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
@@ -287,6 +291,19 @@ class Register:
                             print('>', end='')
                 else:
                     print('x', end='')
+
+            print('|', end='')
+            previous_domains += len(cell.domains)
+
+        print()
+
+    def _print_empty_layer(self, blank_char=' '):
+        previous_domains = 0
+        print('|', end='')
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
+            for i in range(len(cell.domains)):
+                print(blank_char, end='')
 
             print('|', end='')
             previous_domains += len(cell.domains)
