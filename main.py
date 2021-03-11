@@ -48,8 +48,10 @@ class Register:
         self.cells = []
         self.coverings = []
         self._dwg = None
-        self._domain_length = 5     # millimeters
-        self._vertical_offset = 45
+        self._svg_domain_length = 5     # millimeters
+        self._svg_left_offset = 5
+        self._svg_vertical_offset = 45
+        self._svg_cell_height = 30
         self._total_domains = 0
 
     def add_cell(self, cell_name):
@@ -334,44 +336,131 @@ class Register:
 
         print()
 
-    def add_svg(self, name=None, num_instructions=None, new_strands=None, unused_strands=None):
+    def svg_draw_contents(self, name=None, num_instructions=None):
         if self._dwg is None:
             name = name if name is not None else 'output'
-            self._vertical_offset = 40
-            width = str(10 + self._total_domains * self._domain_length) + "mm"
+            self._svg_vertical_offset = 40
+            width = str(10 + self._total_domains * self._svg_domain_length) + "mm"
             height = "100%" if num_instructions is None \
-                else str(5 + (num_instructions + 1) * self._vertical_offset) + "mm"
+                else str(5 + (num_instructions + 1) * self._svg_vertical_offset) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
-        self._dwg.add(self._dwg.line(("5mm", str(self._vertical_offset) + "mm"),
-                                     (str(5 + self._total_domains * self._domain_length) + "mm",
-                                      str(self._vertical_offset) + "mm"),
+        self._svg_draw_register_outline()
+        self._svg_draw_current_strands()
+        self._svg_vertical_offset += 40
+
+    def _svg_draw_register_outline(self):
+        self._dwg.add(self._dwg.line(("5mm", str(self._svg_vertical_offset) + "mm"),
+                                     (str(self._svg_left_offset + self._total_domains * self._svg_domain_length) + "mm",
+                                      str(self._svg_vertical_offset) + "mm"),
                                      stroke=svgwrite.rgb(0, 0, 0)))
 
         domains = 0
         for cell in self.cells:
             cell_type = cell_types[cell]
             num_domains = len(cell_type.domains)
-            self._dwg.add(self._dwg.line((str(5 + domains) + "mm", str(self._vertical_offset) + "mm"),
-                                         (str(5 + domains) + "mm",
-                                          str(self._vertical_offset - 30) + "mm"),
+            self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                                         (str(self._svg_left_offset + domains) + "mm",
+                                          str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
                                          stroke=svgwrite.rgb(0, 0, 0)))
 
             for i in range(1, num_domains):
-                self._dwg.add(self._dwg.line((str(5 + domains + i * self._domain_length) + "mm",
-                                              str(self._vertical_offset) + "mm"),
-                                             (str(5 + domains + i * self._domain_length) + "mm",
-                                              str(self._vertical_offset - self._domain_length) + "mm"),
+                self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains + i * self._svg_domain_length) + "mm",
+                                              str(self._svg_vertical_offset) + "mm"),
+                                             (str(self._svg_left_offset + domains + i * self._svg_domain_length) + "mm",
+                                              str(self._svg_vertical_offset - self._svg_domain_length) + "mm"),
                                              stroke=svgwrite.rgb(0, 0, 0)))
 
-            domains += num_domains * self._domain_length
+            domains += num_domains * self._svg_domain_length
 
-        self._dwg.add(self._dwg.line((str(5 + domains) + "mm", str(self._vertical_offset) + "mm"),
-                                     (str(5 + domains) + "mm",
-                                      str(self._vertical_offset - 30) + "mm"),
+        self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                                     (str(self._svg_left_offset + domains) + "mm",
+                                      str(self._svg_vertical_offset - 30) + "mm"),
                                      stroke=svgwrite.rgb(0, 0, 0)))
 
-        self._vertical_offset += 40
+    def _svg_draw_current_strands(self):
+        upper_y = str(self._svg_vertical_offset - 2 * self._svg_domain_length) + "mm"
+        y = str(self._svg_vertical_offset - self._svg_domain_length) + "mm"
+
+        previous_domains = 0
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
+            for i in range(len(cell.domains)):
+                left = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
+                right = str(left + self._svg_domain_length) + "mm"
+                left = str(left) + "mm"
+                domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
+                                                                                            include_orthogonal=True)
+                if len(orthogonal_coverings) >= 1:
+                    point_right = True
+                    for covering in orthogonal_coverings:
+                        if covering['start_index'] == previous_domains + i:
+                            point_right = False
+                            break
+
+                    if point_right:
+                        self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
+                                                     stroke_width="1mm"))
+                        self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+                    else:
+                        self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=svgwrite.rgb(0, 0, 0),
+                                                     stroke_width="1mm"))
+
+                if len(domain_coverings) == 1:
+                    strand = strand_types[domain_coverings[0]['strand_name']]
+                    index = previous_domains + i - domain_coverings[0]['start_index']
+                    self._dwg.add(
+                        self._dwg.line((left, y), (right, y), stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                    if index == len(strand.domains) - 1:
+                        self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]))
+                elif len(domain_coverings) > 1:
+                    y1 = str(self._svg_vertical_offset - self._svg_domain_length) + "mm"
+                    y2 = str(self._svg_vertical_offset) + "mm"
+                    self._dwg.add(self._dwg.line((left, y2), (right, y1), stroke=svgwrite.rgb(0, 0, 0),
+                                                 stroke_width="1mm"))
+                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=svgwrite.rgb(0, 0, 0),
+                                                 stroke_width="1mm"))
+
+            previous_domains += len(cell.domains)
+
+        if len(self.coverings) >= 1:
+            last_covering = self.coverings[-1]
+            strand = strand_types[last_covering['strand_name']]
+            for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+                self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
+                                             stroke_width="1mm"))
+                self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+
+    def _svg_draw_right_arrow(self, tip_x, tip_y):
+        right = tip_x * 3.7795
+        left = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
+        y = tip_y * 3.7795
+        upper_y = (tip_y - self._svg_domain_length // 2) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length // 2) * 3.7795
+        self._dwg.add(
+            self._dwg.polygon(points=[(right, y), (left, upper_y), (left, lower_y)],
+                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+
+    def _svg_draw_left_arrow(self, tip_x, tip_y):
+        left = tip_x * 3.7795
+        right = (tip_x + 2 * self._svg_domain_length // 3) * 3.7795
+        y = tip_y * 3.7795
+        upper_y = (tip_y - self._svg_domain_length // 2) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length // 2) * 3.7795
+        self._dwg.add(
+            self._dwg.polygon(points=[(left, y), (right, lower_y), (right, upper_y)],
+                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+
+    def _svg_draw_upper_right_arrow(self, tip_x, tip_y):
+        x1 = tip_x * 3.7795
+        y1 = tip_y * 3.7795
+        x2 = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
+        y2 = (tip_y + self._svg_domain_length // 3) * 3.7795
+        x3 = (tip_x - self._svg_domain_length // 4) * 3.7795
+        y3 = (tip_y + 2 * self._svg_domain_length // 3) * 3.7795
+        self._dwg.add(
+            self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
+                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
 
     def save_svg(self):
         if self._dwg is not None:
@@ -469,6 +558,7 @@ def run_simulation():
                 unattached_matches = None
 
             pre_instruction_register = copy.deepcopy(register)
+            register.svg_draw_contents(register_key, len(instructions))
             inst = instructions[inst_num]
             new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
@@ -505,15 +595,13 @@ def run_simulation():
                 pre_instruction_register.print(new_strands, unattached_matches)
                 print()
 
-            register.add_svg(register_key, len(instructions), new_strands, unattached_matches)
-
             if step_by_step_simulation:
                 input('Press Enter to continue')
 
         print("Final result")
         register.print()
         print()
-        register.add_svg()
+        register.svg_draw_contents()
         register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
