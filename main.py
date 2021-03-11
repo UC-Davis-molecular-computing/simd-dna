@@ -1,6 +1,7 @@
 import copy
 import sys
 import json
+import svgwrite
 from json import JSONEncoder
 
 program_loop = True
@@ -46,9 +47,14 @@ class Register:
     def __init__(self):
         self.cells = []
         self.coverings = []
+        self._dwg = None
+        self._domain_length = 5     # millimeters
+        self._vertical_offset = 45
+        self._total_domains = 0
 
     def add_cell(self, cell_name):
         self.cells.append(cell_name)
+        self._total_domains += cell_types[cell_name]["domains"]
 
     def get_cell_at_domain_index(self, domain_index):
         total_domains = 0
@@ -328,6 +334,50 @@ class Register:
 
         print()
 
+    def add_svg(self, name=None, num_instructions=None, new_strands=None, unused_strands=None):
+        if self._dwg is None:
+            name = name if name is not None else 'output'
+            self._vertical_offset = 40
+            width = str(10 + self._total_domains * self._domain_length) + "mm"
+            height = "100%" if num_instructions is None \
+                else str(5 + (num_instructions + 1) * self._vertical_offset) + "mm"
+            self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
+
+        self._dwg.add(self._dwg.line(("5mm", str(self._vertical_offset) + "mm"),
+                                     (str(5 + self._total_domains * self._domain_length) + "mm",
+                                      str(self._vertical_offset) + "mm"),
+                                     stroke=svgwrite.rgb(0, 0, 0)))
+
+        domains = 0
+        for cell in self.cells:
+            cell_type = cell_types[cell]
+            num_domains = len(cell_type.domains)
+            self._dwg.add(self._dwg.line((str(5 + domains) + "mm", str(self._vertical_offset) + "mm"),
+                                         (str(5 + domains) + "mm",
+                                          str(self._vertical_offset - 30) + "mm"),
+                                         stroke=svgwrite.rgb(0, 0, 0)))
+
+            for i in range(1, num_domains):
+                self._dwg.add(self._dwg.line((str(5 + domains + i * self._domain_length) + "mm",
+                                              str(self._vertical_offset) + "mm"),
+                                             (str(5 + domains + i * self._domain_length) + "mm",
+                                              str(self._vertical_offset - self._domain_length) + "mm"),
+                                             stroke=svgwrite.rgb(0, 0, 0)))
+
+            domains += num_domains * self._domain_length
+
+        self._dwg.add(self._dwg.line((str(5 + domains) + "mm", str(self._vertical_offset) + "mm"),
+                                     (str(5 + domains) + "mm",
+                                      str(self._vertical_offset - 30) + "mm"),
+                                     stroke=svgwrite.rgb(0, 0, 0)))
+
+        self._vertical_offset += 40
+
+    def save_svg(self):
+        if self._dwg is not None:
+            self._dwg.save()
+            self._dwg = None
+
     @staticmethod
     def decode_json(cells, coverings):
         self = Register()
@@ -337,6 +387,10 @@ class Register:
         for covering in coverings:
             self.coverings.append({'start_index': covering['start_index'],
                                    'strand_name': covering['strand_name']})
+
+        for cell in self.cells:
+            self._total_domains += len(cell_types[cell].domains)
+
         return self
 
 
@@ -444,11 +498,14 @@ def run_simulation():
             if unattached_matches is not None:
                 unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
 
-            if (len(new_strands) == 0 and (unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
+            if (len(new_strands) == 0 and (
+                    unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
                 print('No changes\n')
             else:
                 pre_instruction_register.print(new_strands, unattached_matches)
                 print()
+
+            register.add_svg(register_key, len(instructions), new_strands, unattached_matches)
 
             if step_by_step_simulation:
                 input('Press Enter to continue')
@@ -456,6 +513,8 @@ def run_simulation():
         print("Final result")
         register.print()
         print()
+        register.add_svg()
+        register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
 
@@ -534,10 +593,11 @@ def simd_simulator(args):
 5 - Run simulation
 6 - Save data
 7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
-'''8 - ''' + ('Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
-'''9 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
-              else 'Show unused instruction strands\n') +
-'''10 - Exit
+                       '''8 - ''' + (
+                           'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
+                       '''9 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
+                                     else 'Show unused instruction strands\n') +
+                       '''10 - Exit
 
 ''')
 
