@@ -340,13 +340,15 @@ class Register:
         if self._dwg is None:
             name = name if name is not None else 'output'
             self._svg_vertical_offset = 40
-            width = str(10 + self._total_domains * self._svg_domain_length) + "mm"
+            width = str(10 + (self._total_domains + 10) * self._svg_domain_length) + "mm"
             height = "100%" if num_instructions is None \
                 else str(5 + (num_instructions + 1) * self._svg_vertical_offset) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
         self._svg_draw_register_outline()
-        self._svg_draw_current_strands()
+        self.svg_draw_strands(self.coverings, 1)
+
+    def svg_increment_vertical_offset(self):
         self._svg_vertical_offset += 40
 
     def _svg_draw_register_outline(self):
@@ -378,19 +380,26 @@ class Register:
                                       str(self._svg_vertical_offset - 30) + "mm"),
                                      stroke=svgwrite.rgb(0, 0, 0)))
 
-    def _svg_draw_current_strands(self):
-        upper_y = str(self._svg_vertical_offset - 2 * self._svg_domain_length) + "mm"
-        y = str(self._svg_vertical_offset - self._svg_domain_length) + "mm"
+    def svg_draw_strands(self, strand_set, layer):
+        if strand_set is None:
+            return
 
+        half_upper_y = str(self._svg_vertical_offset - (layer + 0.5) * self._svg_domain_length) + "mm"
+        upper_y = str(self._svg_vertical_offset - (layer + 1) * self._svg_domain_length) + "mm"
+        half_y = str(self._svg_vertical_offset - (layer - 0.5) * self._svg_domain_length) + "mm"
+        y = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
         previous_domains = 0
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
                 left = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
+                half_right = str(left + self._svg_domain_length // 2) + "mm"
                 right = str(left + self._svg_domain_length) + "mm"
                 left = str(left) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
-                                                                                            include_orthogonal=True)
+                                                                                            include_orthogonal=True,
+                                                                                            strand_set=strand_set)
+                strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else None
                 if len(orthogonal_coverings) >= 1:
                     point_right = True
                     for covering in orthogonal_coverings:
@@ -401,18 +410,26 @@ class Register:
                     if point_right:
                         self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
                                                      stroke_width="1mm"))
-                        self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+                        if strand is not None and not strand.is_complementary:
+                            self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
                     else:
                         self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=svgwrite.rgb(0, 0, 0),
                                                      stroke_width="1mm"))
 
                 if len(domain_coverings) == 1:
-                    strand = strand_types[domain_coverings[0]['strand_name']]
                     index = previous_domains + i - domain_coverings[0]['start_index']
-                    self._dwg.add(
-                        self._dwg.line((left, y), (right, y), stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
-                    if index == len(strand.domains) - 1:
-                        self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]))
+                    if strand.is_complementary:
+                        if index == 0:
+                            self._svg_draw_left_arrow(int(left[:-2]), int(y[:-2]))
+                        else:
+                            self._dwg.add(
+                                self._dwg.line((left, y), (half_right, y),
+                                               stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                    else:
+                        self._dwg.add(
+                            self._dwg.line((left, y), (right, y), stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                        if index == len(strand.domains) - 1:
+                            self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]))
                 elif len(domain_coverings) > 1:
                     y1 = str(self._svg_vertical_offset - self._svg_domain_length) + "mm"
                     y2 = str(self._svg_vertical_offset) + "mm"
@@ -423,20 +440,24 @@ class Register:
 
             previous_domains += len(cell.domains)
 
-        if len(self.coverings) >= 1:
-            last_covering = self.coverings[-1]
+        if len(strand_set) >= 1:
+            last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
-            for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+            for i in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+                left = self._svg_left_offset + i * self._svg_domain_length
+                right = str(left + self._svg_domain_length) + "mm"
+                left = str(left) + "mm"
                 self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
                                              stroke_width="1mm"))
-                self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+                if not strand.is_complementary:
+                    self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
 
     def _svg_draw_right_arrow(self, tip_x, tip_y):
         right = tip_x * 3.7795
         left = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
         y = tip_y * 3.7795
-        upper_y = (tip_y - self._svg_domain_length // 2) * 3.7795
-        lower_y = (tip_y + self._svg_domain_length // 2) * 3.7795
+        upper_y = (tip_y - self._svg_domain_length // 3) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(right, y), (left, upper_y), (left, lower_y)],
                               stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
@@ -445,8 +466,8 @@ class Register:
         left = tip_x * 3.7795
         right = (tip_x + 2 * self._svg_domain_length // 3) * 3.7795
         y = tip_y * 3.7795
-        upper_y = (tip_y - self._svg_domain_length // 2) * 3.7795
-        lower_y = (tip_y + self._svg_domain_length // 2) * 3.7795
+        upper_y = (tip_y - self._svg_domain_length // 3) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(left, y), (right, lower_y), (right, upper_y)],
                               stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
@@ -593,7 +614,10 @@ def run_simulation():
                 print('No changes\n')
             else:
                 pre_instruction_register.print(new_strands, unattached_matches)
+                register.svg_draw_strands(new_strands, 3)
                 print()
+
+            register.svg_increment_vertical_offset()
 
             if step_by_step_simulation:
                 input('Press Enter to continue')
