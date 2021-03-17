@@ -435,7 +435,8 @@ class Register:
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True,
                                                                                             strand_set=strand_set)
-                strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else None
+                strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
+                    strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
                 if len(orthogonal_coverings) >= 1:
                     point_right = True
                     for covering in orthogonal_coverings:
