@@ -641,6 +641,9 @@ def run_simulation():
                     else:
                         new_strands.extend([strand for strand in new_attachments if strand not in displaced_strands])
 
+                    if unattached_matches is not None:
+                        unattached_matches.extend(displaced_strands)
+
             print("Instruction", inst_num + 1)
             new_strands.sort(key=lambda x: x['start_index'])
             if unattached_matches is not None:
