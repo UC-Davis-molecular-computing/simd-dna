@@ -750,6 +750,138 @@
                 "12"
             ],
             "is_complementary": true
+        },
+        "43a": {
+            "domains": [
+                "d1",
+                "d2",
+                "d3",
+                "e1",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "43b": {
+            "domains": [
+                "e2",
+                "e3",
+                "1",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "43c": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "44a": {
+            "domains": [
+                "c1",
+                "c2",
+                "c3",
+                "d1",
+                "d2",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "44b": {
+            "domains": [
+                "d3",
+                "e1",
+                "e2",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "44c": {
+            "domains": [
+                "e3",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "12"
+            ],
+            "is_complementary": false
+        },
+        "45a": {
+            "domains": [
+                "c1",
+                "c2",
+                "c3",
+                "d1",
+                "d2",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "45b": {
+            "domains": [
+                "d3",
+                "e1",
+                "e2",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "45c": {
+            "domains": [
+                "e3",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "47a": {
+            "domains": [
+                "d1",
+                "d2",
+                "d3",
+                "e1",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "47b": {
+            "domains": [
+                "e2",
+                "e3",
+                "1",
+                "12"
+            ],
+            "is_complementary": true
+        },
+        "47c": {
+            "domains": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "12"
+            ],
+            "is_complementary": true
         }
     },
     "registers": {
@@ -1148,6 +1280,41 @@
             "42b",
             "42c",
             "42d"
+        ],
+        [
+            "43a",
+            "43b",
+            "43c",
+            "a_full",
+            "b_full"
+        ],
+        [
+            "44a",
+            "44b",
+            "44c"
+        ],
+        [
+            "45a",
+            "45b",
+            "45c"
+        ],
+        [
+            "c_full",
+            "d_full",
+            "e_full",
+            "symbol_123",
+            "symbol_456",
+            "symbol_78"
+        ],
+        [
+            "47a",
+            "47b",
+            "47c"
+        ],
+        [
+            "d_final",
+            "e_full",
+            "symbol_full"
         ],
         [
             "a_restart",
