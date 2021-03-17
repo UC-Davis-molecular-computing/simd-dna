@@ -336,6 +336,44 @@ class Register:
 
         print()
 
+    def sanitize_unattached_strands(self, unattached_strands, new_strands):
+        sanitized_strands = []
+        for strand in reversed(unattached_strands):
+            add_strand = True
+            for new_strand in new_strands:
+                if self.strands_intersect(strand, new_strand):
+                    add_strand = False
+                    break
+
+            if add_strand:
+                for other_strand in sanitized_strands:
+                    if self.strands_intersect(strand, other_strand):
+                        add_strand = False
+                        break
+
+            if add_strand:
+                sanitized_strands.append(strand)
+
+        return sanitized_strands
+
+    @staticmethod
+    def strands_intersect(strand_1, strand_2):
+        if strand_1['start_index'] > strand_2['start_index']:
+            temp = strand_2
+            strand_2 = strand_1
+            strand_1 = temp
+
+        start_1 = strand_1['start_index']
+        start_2 = strand_2['start_index']
+        domains_1 = strand_types[strand_1['strand_name']].domains
+        domains_2 = strand_types[strand_2['strand_name']].domains
+        diff = start_2 - start_1
+        for i in range(diff, len(domains_1)):
+            if domains_1[i] == domains_2[i-diff]:
+                return True
+
+        return False
+
     def svg_draw_contents(self, name=None, num_instructions=None):
         if self._dwg is None:
             name = name if name is not None else 'output'
@@ -606,6 +644,7 @@ def run_simulation():
             new_strands.sort(key=lambda x: x['start_index'])
             if unattached_matches is not None:
                 unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
+                unattached_matches = register.sanitize_unattached_strands(unattached_matches, new_strands)
 
             if (len(new_strands) == 0 and (
                     unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
