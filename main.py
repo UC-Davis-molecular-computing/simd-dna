@@ -441,6 +441,8 @@ class Register:
                 two_thirds = str(left + 55 * self._svg_domain_length // 100) + "mm"
                 five_sixths = str(left + 5 * self._svg_domain_length // 6) + "mm"
                 right = str(left + self._svg_domain_length) + "mm"
+                short_right = str(left + 3 * self._svg_domain_length // 5) + "mm"
+                short_left = str(left + self._svg_domain_length // 3) + "mm"
                 left = str(left) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True,
@@ -470,7 +472,7 @@ class Register:
                     index = previous_domains + i - domain_coverings[0]['start_index']
                     if strand.is_complementary:
                         if index == 0:
-                            self._svg_draw_left_arrow(int(left[:-2]), int(y[:-2]), color)
+                            self._svg_draw_left_arrow(int(short_left[:-2]), int(y[:-2]), color)
                         else:
                             self._dwg.add(
                                 self._dwg.line((one_sixth, y), (one_third, y),
@@ -479,10 +481,16 @@ class Register:
                                 self._dwg.line((two_thirds, y), (five_sixths, y),
                                                stroke=color, stroke_width="1mm"))
                     else:
-                        self._dwg.add(
-                            self._dwg.line((left, y), (right, y), stroke=color, stroke_width="1mm"))
                         if index == len(strand.domains) - 1:
-                            self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]), color)
+                            self._dwg.add(
+                                self._dwg.line((left, y), (short_right, y), stroke=color, stroke_width="1mm"))
+                            self._svg_draw_right_arrow(int(short_right[:-2]), int(y[:-2]), color)
+                        elif index == 0:
+                            self._dwg.add(
+                                self._dwg.line((short_left, y), (right, y), stroke=color, stroke_width="1mm"))
+                        else:
+                            self._dwg.add(
+                                self._dwg.line((left, y), (right, y), stroke=color, stroke_width="1mm"))
                 elif len(domain_coverings) > 1:
                     y1 = str(self._svg_vertical_offset - (layer - 1) * self._svg_domain_length) + "mm"
                     y2 = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
@@ -518,8 +526,8 @@ class Register:
                               stroke=color, fill=color, stroke_width="1mm"))
 
     def _svg_draw_left_arrow(self, tip_x, tip_y, color):
-        left = tip_x * 3.7795
-        right = (tip_x + 2 * self._svg_domain_length // 3) * 3.7795
+        left = (tip_x + self._svg_domain_length // 2) * 3.7795
+        right = (tip_x + 2 * self._svg_domain_length // 3 + self._svg_domain_length // 2) * 3.7795
         y = tip_y * 3.7795
         upper_y = (tip_y - self._svg_domain_length // 3) * 3.7795
         lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
