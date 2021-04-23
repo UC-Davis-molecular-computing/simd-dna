@@ -565,7 +565,7 @@ class Register:
 
     def save_svg(self):
         if self._dwg is not None:
-            self._dwg.save()
+            self._dwg.save(pretty=True)
             self._dwg = None
 
     @staticmethod
