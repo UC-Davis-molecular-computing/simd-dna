@@ -56,7 +56,7 @@ class Register:
         self.coverings = []
         self._dwg = None
         self._svg_domain_length = 5     # millimeters
-        self._svg_left_offset = 5
+        self._svg_left_offset = 40
         self._svg_vertical_offset = 55
         self._svg_cell_height = 40
         self._total_domains = 0
@@ -381,7 +381,7 @@ class Register:
 
         return False
 
-    def svg_draw_contents(self, name=None, num_instructions=None):
+    def svg_draw_contents(self, name=None, num_instructions=None, label=None):
         if self._dwg is None:
             name = name if name is not None else 'output'
             self._svg_vertical_offset = 55
@@ -390,14 +390,20 @@ class Register:
                 else str(5 + (num_instructions + 1) * self._svg_vertical_offset) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
-        self._svg_draw_register_outline()
+        self._svg_draw_register_outline(label)
         self.svg_draw_strands(self.coverings, 1)
 
     def svg_increment_vertical_offset(self):
         self._svg_vertical_offset += 50
 
-    def _svg_draw_register_outline(self):
-        self._dwg.add(self._dwg.line(("5mm", str(self._svg_vertical_offset) + "mm"),
+    def _svg_draw_register_outline(self, label):
+        if label is not None:
+            self._dwg.add(self._dwg.text(label, x=[str(int(self._svg_left_offset * 3.7995 / 2))],
+                                         y=[str(int(3.7995 * (self._svg_vertical_offset - self._svg_cell_height / 2)))],
+                                         fill=svgwrite.rgb(0, 0, 0),
+                                         style="text-anchor:middle;dominant-baseline:middle"))
+
+        self._dwg.add(self._dwg.line((str(self._svg_left_offset) + "mm", str(self._svg_vertical_offset) + "mm"),
                                      (str(self._svg_left_offset + self._total_domains * self._svg_domain_length) + "mm",
                                       str(self._svg_vertical_offset) + "mm"),
                                      stroke=svgwrite.rgb(0, 0, 0)))
@@ -663,7 +669,7 @@ def run_simulation():
                 unattached_matches = None
 
             pre_instruction_register = copy.deepcopy(register)
-            register.svg_draw_contents(register_key, len(instructions))
+            register.svg_draw_contents(register_key, len(instructions), "Instruction " + str(inst_num + 1))
             inst = instructions[inst_num]
             new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
@@ -714,7 +720,7 @@ def run_simulation():
         print("Final result")
         register.print()
         print()
-        register.svg_draw_contents()
+        register.svg_draw_contents(label="Final result")
         register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
