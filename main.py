@@ -436,7 +436,10 @@ class Register:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
                 left = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
-                half_right = str(left + self._svg_domain_length // 2) + "mm"
+                one_sixth = str(left + self._svg_domain_length // 6) + "mm"
+                one_third = str(left + self._svg_domain_length // 3) + "mm"
+                two_thirds = str(left + 55 * self._svg_domain_length // 100) + "mm"
+                five_sixths = str(left + 5 * self._svg_domain_length // 6) + "mm"
                 right = str(left + self._svg_domain_length) + "mm"
                 left = str(left) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
@@ -470,7 +473,10 @@ class Register:
                             self._svg_draw_left_arrow(int(left[:-2]), int(y[:-2]), color)
                         else:
                             self._dwg.add(
-                                self._dwg.line((left, y), (half_right, y),
+                                self._dwg.line((one_sixth, y), (one_third, y),
+                                               stroke=color, stroke_width="1mm"))
+                            self._dwg.add(
+                                self._dwg.line((two_thirds, y), (five_sixths, y),
                                                stroke=color, stroke_width="1mm"))
                     else:
                         self._dwg.add(
