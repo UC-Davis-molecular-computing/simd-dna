@@ -33,7 +33,7 @@ class Strand:
             self.color = '#000000'
 
     @staticmethod
-    def decode_json(domains, is_complementary, color='#000000'):
+    def decode_json(domains, is_complementary, color='#000000', **kwargs):
         self = Strand(domains, is_complementary, color)
         return self
 
@@ -44,7 +44,7 @@ class Cell:
         self.domains = domains
 
     @staticmethod
-    def decode_json(domains):
+    def decode_json(domains, **kwargs):
         self = Cell(domains)
         return self
 
@@ -569,7 +569,7 @@ class Register:
             self._dwg = None
 
     @staticmethod
-    def decode_json(cells, coverings):
+    def decode_json(cells, coverings, **kwargs):
         self = Register()
         self.cells = cells
 
