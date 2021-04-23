@@ -480,9 +480,10 @@ class Register:
                 elif len(domain_coverings) > 1:
                     y1 = str(self._svg_vertical_offset - (layer - 1) * self._svg_domain_length) + "mm"
                     y2 = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
+                    next_strand = strand_types[domain_coverings[1]['strand_name']]
                     self._dwg.add(self._dwg.line((left, y2), (right, y1), stroke=color,
                                                  stroke_width="1mm"))
-                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=color,
+                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=convert_hex_to_rgb(next_strand.color),
                                                  stroke_width="1mm"))
 
             previous_domains += len(cell.domains)
