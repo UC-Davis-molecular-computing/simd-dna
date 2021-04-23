@@ -2,6 +2,7 @@ import copy
 import sys
 import json
 import svgwrite
+import re
 from json import JSONEncoder
 
 program_loop = True
@@ -21,13 +22,19 @@ class ObjectEncoder(JSONEncoder):
 
 class Strand:
 
-    def __init__(self, domains, is_complementary):
+    def __init__(self, domains, is_complementary, color='#000000'):
         self.domains = domains
         self.is_complementary = is_complementary
+        if re.match('^#?[A-Fa-f0-9]{6}$', color) is not None:
+            self.color = color
+            if not self.color.startswith('#'):
+                self.color = '#' + self.color
+        else:
+            self.color = '#000000'
 
     @staticmethod
-    def decode_json(domains, is_complementary):
-        self = Strand(domains, is_complementary)
+    def decode_json(domains, is_complementary, color='#000000'):
+        self = Strand(domains, is_complementary, color)
         return self
 
 
@@ -437,6 +444,7 @@ class Register:
                                                                                             strand_set=strand_set)
                 strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
+                color = 'rgb(0, 0, 0)' if strand is None else convert_hex_to_rgb(strand.color)
                 if len(orthogonal_coverings) >= 1:
                     point_right = True
                     for covering in orthogonal_coverings:
@@ -445,36 +453,36 @@ class Register:
                             break
 
                     if point_right:
-                        self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
+                        self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=color,
                                                      stroke_width="1mm"))
                         if strand is not None and not strand.is_complementary:
-                            self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+                            self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]), color)
                     else:
-                        self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=svgwrite.rgb(0, 0, 0),
+                        self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=color,
                                                      stroke_width="1mm"))
                         if strand is not None and strand.is_complementary:
-                            self._svg_draw_upper_left_arrow(int(left[:-2]), int(upper_y[:-2]))
+                            self._svg_draw_upper_left_arrow(int(left[:-2]), int(upper_y[:-2]), color)
 
                 if len(domain_coverings) == 1:
                     index = previous_domains + i - domain_coverings[0]['start_index']
                     if strand.is_complementary:
                         if index == 0:
-                            self._svg_draw_left_arrow(int(left[:-2]), int(y[:-2]))
+                            self._svg_draw_left_arrow(int(left[:-2]), int(y[:-2]), color)
                         else:
                             self._dwg.add(
                                 self._dwg.line((left, y), (half_right, y),
-                                               stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                                               stroke=color, stroke_width="1mm"))
                     else:
                         self._dwg.add(
-                            self._dwg.line((left, y), (right, y), stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                            self._dwg.line((left, y), (right, y), stroke=color, stroke_width="1mm"))
                         if index == len(strand.domains) - 1:
-                            self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]))
+                            self._svg_draw_right_arrow(int(right[:-2]), int(y[:-2]), color)
                 elif len(domain_coverings) > 1:
                     y1 = str(self._svg_vertical_offset - (layer - 1) * self._svg_domain_length) + "mm"
                     y2 = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
-                    self._dwg.add(self._dwg.line((left, y2), (right, y1), stroke=svgwrite.rgb(0, 0, 0),
+                    self._dwg.add(self._dwg.line((left, y2), (right, y1), stroke=color,
                                                  stroke_width="1mm"))
-                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=svgwrite.rgb(0, 0, 0),
+                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=color,
                                                  stroke_width="1mm"))
 
             previous_domains += len(cell.domains)
@@ -482,16 +490,17 @@ class Register:
         if len(strand_set) >= 1:
             last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
+            color = convert_hex_to_rgb(strand.color)
             for i in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
                 left = self._svg_left_offset + i * self._svg_domain_length
                 right = str(left + self._svg_domain_length) + "mm"
                 left = str(left) + "mm"
-                self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=svgwrite.rgb(0, 0, 0),
+                self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=color,
                                              stroke_width="1mm"))
                 if not strand.is_complementary:
-                    self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]))
+                    self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]), color)
 
-    def _svg_draw_right_arrow(self, tip_x, tip_y):
+    def _svg_draw_right_arrow(self, tip_x, tip_y, color):
         right = tip_x * 3.7795
         left = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
         y = tip_y * 3.7795
@@ -499,9 +508,9 @@ class Register:
         lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(right, y), (left, upper_y), (left, lower_y)],
-                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                              stroke=color, fill=color, stroke_width="1mm"))
 
-    def _svg_draw_left_arrow(self, tip_x, tip_y):
+    def _svg_draw_left_arrow(self, tip_x, tip_y, color):
         left = tip_x * 3.7795
         right = (tip_x + 2 * self._svg_domain_length // 3) * 3.7795
         y = tip_y * 3.7795
@@ -509,9 +518,9 @@ class Register:
         lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(left, y), (right, lower_y), (right, upper_y)],
-                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                              stroke=color, fill=color, stroke_width="1mm"))
 
-    def _svg_draw_upper_right_arrow(self, tip_x, tip_y):
+    def _svg_draw_upper_right_arrow(self, tip_x, tip_y, color):
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
         x2 = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
@@ -520,9 +529,9 @@ class Register:
         y3 = (tip_y + 2 * self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
-                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                              stroke=color, fill=color, stroke_width="1mm"))
 
-    def _svg_draw_upper_left_arrow(self, tip_x, tip_y):
+    def _svg_draw_upper_left_arrow(self, tip_x, tip_y, color):
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
         x2 = (tip_x + self._svg_domain_length // 4) * 3.7795
@@ -531,7 +540,7 @@ class Register:
         y3 = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
-                              stroke=svgwrite.rgb(0, 0, 0), stroke_width="1mm"))
+                              stroke=color, fill=color, stroke_width="1mm"))
 
     def save_svg(self):
         if self._dwg is not None:
@@ -552,6 +561,13 @@ class Register:
             self._total_domains += len(cell_types[cell].domains)
 
         return self
+
+
+def convert_hex_to_rgb(hex_rgb):
+    red = int(hex_rgb[1:3], 16)
+    green = int(hex_rgb[3:5], 16)
+    blue = int(hex_rgb[5:7], 16)
+    return 'rgb(%d, %d, %d)' % (red, green, blue)
 
 
 def add_cell_type():
@@ -598,8 +614,11 @@ def add_strand_type():
     name = input('What is the strand name? ')
     domains = input('Enter domains separated by commas: ').split(',')
     is_complementary = input('Is the strand complementary to the top strand? Y or N? ')
+    color = input('What is the color hex code? ')
+    if color == '':
+        color = '#000000'
 
-    strand_types[name] = Strand(domains, True if is_complementary.lower() == 'y' else False)
+    strand_types[name] = Strand(domains, True if is_complementary.lower() == 'y' else False, color)
 
 
 def add_instruction():

@@ -22,21 +22,24 @@
                 "2",
                 "3"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#FE8496"
         },
         "Zero-second": {
             "domains": [
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#FE8496"
         },
         "One-first": {
             "domains": [
                 "1",
                 "2"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#541074"
         },
         "One-second": {
             "domains": [
@@ -44,7 +47,8 @@
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#541074"
         },
         "1A": {
             "domains": [
@@ -53,7 +57,8 @@
                 "6",
                 "7"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#3499C6"
         },
         "1B": {
             "domains": [
@@ -64,7 +69,8 @@
                 "3",
                 "8"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#3499C6"
         },
         "2A": {
             "domains": [
@@ -73,7 +79,8 @@
                 "6",
                 "7"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#3499C6"
         },
         "2B": {
             "domains": [
@@ -84,7 +91,8 @@
                 "3",
                 "8"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#3499C6"
         },
         "4": {
             "domains": [
@@ -92,7 +100,8 @@
                 "3",
                 "4"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#9B962D"
         },
         "6": {
             "domains": [
@@ -100,7 +109,8 @@
                 "2",
                 "3"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#FE8496"
         }
     },
     "registers": {
