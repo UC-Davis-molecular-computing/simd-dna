@@ -7,6 +7,30 @@
                 "3",
                 "4",
                 "5"
+            ],
+            "strand_labels": [
+                {
+                    "strands": [
+                        [
+                            1,
+                            "One"
+                        ]
+                    ],
+                    "label": "1"
+                },
+                {
+                    "strands": [
+                        [
+                            0,
+                            "Zero-first"
+                        ],
+                        [
+                            3,
+                            "Zero-second"
+                        ]
+                    ],
+                    "label": "0"
+                }
             ]
         }
     },
@@ -18,7 +42,8 @@
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#1a227e"
         },
         "Zero-first": {
             "domains": [
@@ -26,14 +51,16 @@
                 "2",
                 "3"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#74cfcf"
         },
         "Zero-second": {
             "domains": [
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#74cfcf"
         },
         "1": {
             "domains": [
@@ -42,7 +69,8 @@
                 "1",
                 "6"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#7eb20f"
         },
         "2": {
             "domains": [
@@ -53,7 +81,8 @@
                 "3",
                 "7"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#e50082"
         },
         "3": {
             "domains": [
@@ -64,7 +93,8 @@
                 "3",
                 "7"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#e50082"
         },
         "5": {
             "domains": [
@@ -73,7 +103,8 @@
                 "1",
                 "6"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#7eb20f"
         }
     },
     "registers": {
