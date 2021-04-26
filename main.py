@@ -59,6 +59,7 @@ class Register:
         self._svg_domain_length = 5     # millimeters
         self._svg_left_offset = 40
         self._svg_vertical_offset = 55
+        self._svg_cell_label_height_offset = 3
         self._svg_cell_height = 40
         self._total_domains = 0
 
@@ -393,6 +394,7 @@ class Register:
 
         self._svg_draw_register_outline(label)
         self.svg_draw_strands(self.coverings, 1)
+        self._svg_draw_cell_strand_labels()
 
     def svg_increment_vertical_offset(self):
         self._svg_vertical_offset += 50
@@ -521,6 +523,38 @@ class Register:
                                              stroke_width="1mm"))
                 if not strand.is_complementary:
                     self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]), color)
+
+    def _svg_draw_cell_strand_labels(self):
+        global cell_types
+        previous_domains = 0
+        for cell_name in self.cells:
+            cell = cell_types[cell_name]
+            labels = cell_types[cell_name].strand_labels
+            is_match = [True for _ in labels]
+            for i in range(len(labels)):
+                label = labels[i]
+                for strand in label['strands']:
+                    domain_coverings = self.get_coverings_at_domain_index(previous_domains + strand[0])
+                    domain_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
+                                                   domain_coverings))
+                    domain_coverings = [d['strand_name'] for d in domain_coverings]
+                    if strand[1] not in domain_coverings:
+                        is_match[i] = False
+                        break
+
+            labels = [label['label'] for (label, match) in zip(labels, is_match) if match]
+            if len(labels) > 0:
+                left = previous_domains * self._svg_domain_length
+                right = left + len(cell.domains) * self._svg_domain_length
+                x = ((left + right) / 2) + self._svg_left_offset
+                x = int(x * 3.7995)
+                self._dwg.add(self._dwg.text(labels[0], x=[x],
+                                             y=[str(int(3.7995 * (self._svg_vertical_offset +
+                                                                  self._svg_cell_label_height_offset)))],
+                                             fill=svgwrite.rgb(0, 0, 0),
+                                             style="text-anchor:middle;dominant-baseline:middle"))
+
+            previous_domains += len(cell.domains)
 
     def _svg_draw_right_arrow(self, tip_x, tip_y, color):
         right = tip_x * 3.7795
@@ -658,7 +692,18 @@ def add_cell_strand_label():
 all separated by commas: ').split(',')
     label = {'strands': [], 'label': data[-1]}
     for i in range(1, len(data) - 1, 2):
-        label['strands'].append([int(data[i]), data[i+1]])
+        strands = label['strands']
+        index = int(data[i])
+        if len(strands) == 0:
+            strands.append([index, data[i+1]])
+        else:
+            for j in range(len(strands)):
+                if strands[j][0] > index:
+                    strands.insert(j, [index, data[i+1]])
+                    break
+
+                if j == len(strands) - 1:
+                    strands.append([index, data[i + 1]])
     cell_types[data[0]].strand_labels.append(label)
 
 
