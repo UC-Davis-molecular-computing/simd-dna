@@ -460,6 +460,8 @@ class Register:
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
                 color = 'rgb(0, 0, 0)' if strand is None else convert_hex_to_rgb(strand.color)
                 if len(orthogonal_coverings) >= 1:
+                    orthogonal_strand = orthogonal_coverings[0]['strand_name']
+                    orthogonal_color = strand_types[orthogonal_strand].color
                     point_right = True
                     for covering in orthogonal_coverings:
                         if covering['start_index'] == previous_domains + i:
@@ -467,15 +469,15 @@ class Register:
                             break
 
                     if point_right:
-                        self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=color,
+                        self._dwg.add(self._dwg.line((left, y), (right, upper_y), stroke=orthogonal_color,
                                                      stroke_width="1mm"))
                         if strand is not None and not strand.is_complementary:
-                            self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]), color)
+                            self._svg_draw_upper_right_arrow(int(right[:-2]), int(upper_y[:-2]), orthogonal_color)
                     else:
-                        self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=color,
+                        self._dwg.add(self._dwg.line((left, upper_y), (right, y), stroke=orthogonal_color,
                                                      stroke_width="1mm"))
                         if strand is not None and strand.is_complementary:
-                            self._svg_draw_upper_left_arrow(int(left[:-2]), int(upper_y[:-2]), color)
+                            self._svg_draw_upper_left_arrow(int(left[:-2]), int(upper_y[:-2]), orthogonal_color)
 
                 if len(domain_coverings) == 1:
                     index = previous_domains + i - domain_coverings[0]['start_index']
