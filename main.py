@@ -581,10 +581,10 @@ class Register:
     def _svg_draw_upper_right_arrow(self, tip_x, tip_y, color):
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
-        x2 = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
+        x2 = (tip_x - self._svg_domain_length // 2) * 3.7795
         y2 = (tip_y + self._svg_domain_length // 3) * 3.7795
         x3 = (tip_x - self._svg_domain_length // 4) * 3.7795
-        y3 = (tip_y + 2 * self._svg_domain_length // 3) * 3.7795
+        y3 = (tip_y + self._svg_domain_length // 2) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
                               stroke=color, fill=color, stroke_width="1mm"))
@@ -593,8 +593,8 @@ class Register:
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
         x2 = (tip_x + self._svg_domain_length // 4) * 3.7795
-        y2 = (tip_y + 2 * self._svg_domain_length // 3) * 3.7795
-        x3 = (tip_x + 2 * self._svg_domain_length // 3) * 3.7795
+        y2 = (tip_y + self._svg_domain_length // 2) * 3.7795
+        x3 = (tip_x + self._svg_domain_length // 2) * 3.7795
         y3 = (tip_y + self._svg_domain_length // 3) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
