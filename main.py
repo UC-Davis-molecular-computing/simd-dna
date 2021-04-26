@@ -560,20 +560,20 @@ class Register:
 
     def _svg_draw_right_arrow(self, tip_x, tip_y, color):
         right = tip_x * 3.7795
-        left = (tip_x - 2 * self._svg_domain_length // 3) * 3.7795
+        left = (tip_x - self._svg_domain_length / 3) * 3.7795
         y = tip_y * 3.7795
-        upper_y = (tip_y - self._svg_domain_length // 3) * 3.7795
-        lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
+        upper_y = (tip_y - self._svg_domain_length / 8) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length / 8) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(right, y), (left, upper_y), (left, lower_y)],
                               stroke=color, fill=color, stroke_width="1mm"))
 
     def _svg_draw_left_arrow(self, tip_x, tip_y, color):
-        left = (tip_x + self._svg_domain_length // 2) * 3.7795
-        right = (tip_x + 2 * self._svg_domain_length // 3 + self._svg_domain_length // 2) * 3.7795
+        left = (tip_x + self._svg_domain_length / 2) * 3.7795
+        right = left + (self._svg_domain_length / 3) * 3.7795
         y = tip_y * 3.7795
-        upper_y = (tip_y - self._svg_domain_length // 3) * 3.7795
-        lower_y = (tip_y + self._svg_domain_length // 3) * 3.7795
+        upper_y = (tip_y - self._svg_domain_length / 8) * 3.7795
+        lower_y = (tip_y + self._svg_domain_length / 8) * 3.7795
         self._dwg.add(
             self._dwg.polygon(points=[(left, y), (right, lower_y), (right, upper_y)],
                               stroke=color, fill=color, stroke_width="1mm"))
