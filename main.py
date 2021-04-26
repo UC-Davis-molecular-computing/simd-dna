@@ -51,16 +51,16 @@ class Cell:
 
 
 class Register:
+    _svg_domain_length = 5  # millimeters
+    _svg_left_offset = 40
+    _svg_cell_label_height_offset = 3
+    _svg_cell_height = 40
 
     def __init__(self):
         self.cells = []
         self.coverings = []
         self._dwg = None
-        self._svg_domain_length = 5     # millimeters
-        self._svg_left_offset = 40
         self._svg_vertical_offset = 55
-        self._svg_cell_label_height_offset = 3
-        self._svg_cell_height = 40
         self._total_domains = 0
 
     def add_cell(self, cell_name):
@@ -786,11 +786,17 @@ def run_simulation():
 
 def save_data():
     filename = input("Enter filename: ")
+    register_copies = copy.deepcopy(registers)
+    for register in register_copies.values():
+        del register._dwg
+        del register._svg_vertical_offset
+        del register._total_domains
+
     with open(filename, 'w') as file:
         json.dump({
             'cell_types': cell_types,
             'strand_types': strand_types,
-            'registers': registers,
+            'registers': register_copies,
             'instructions': instructions
         }, file, indent=4, cls=ObjectEncoder)
         file.flush()
