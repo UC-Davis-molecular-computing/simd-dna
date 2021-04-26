@@ -40,12 +40,13 @@ class Strand:
 
 class Cell:
 
-    def __init__(self, domains):
+    def __init__(self, domains, strand_labels=[]):
         self.domains = domains
+        self.strand_labels = strand_labels
 
     @staticmethod
-    def decode_json(domains, **kwargs):
-        self = Cell(domains)
+    def decode_json(domains, strand_labels=[], **kwargs):
+        self = Cell(domains, strand_labels)
         return self
 
 
@@ -652,6 +653,15 @@ def add_instruction():
     instructions.append(instruction)
 
 
+def add_cell_strand_label():
+    data = input('Enter the cell name, followed by the coordinate-strand name pairs, followed by the string label, \
+all separated by commas: ').split(',')
+    label = {'strands': [], 'label': data[-1]}
+    for i in range(1, len(data) - 1, 2):
+        label['strands'].append([int(data[i]), data[i+1]])
+    cell_types[data[0]].strand_labels.append(label)
+
+
 def run_simulation():
     register_copies = copy.deepcopy(registers)
     for register_key in register_copies.keys():
@@ -784,12 +794,13 @@ def simd_simulator(args):
                    '2': add_cells_to_register,
                    '3': add_strand_type,
                    '4': add_instruction,
-                   '5': run_simulation,
-                   '6': save_data,
-                   '7': toggle_step_by_step_simulation,
-                   '8': toggle_keep_results,
-                   '9': toggle_show_unused_instruction_strands,
-                   '10': exit_loop}
+                   '5': add_cell_strand_label,
+                   '6': run_simulation,
+                   '7': save_data,
+                   '8': toggle_step_by_step_simulation,
+                   '9': toggle_keep_results,
+                   '10': toggle_show_unused_instruction_strands,
+                   '11': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -797,14 +808,15 @@ def simd_simulator(args):
 2 - Add cells to register
 3 - Add strand type
 4 - Add instruction
-5 - Run simulation
-6 - Save data
-7 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
-                       '''8 - ''' + (
+5 - Add cell-strand labels
+6 - Run simulation
+7 - Save data
+8 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
+                       '''9 - ''' + (
                            'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
-                       '''9 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
+                       '''10 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
                                      else 'Show unused instruction strands\n') +
-                       '''10 - Exit
+                       '''11 - Exit
 
 ''')
 

@@ -7,12 +7,41 @@
                 "3",
                 "4",
                 "5"
+            ],
+            "strand_labels": [
+                {
+                    "strands": [
+                        [
+                            0,
+                            "Zero-first"
+                        ],
+                        [
+                            3,
+                            "Zero-second"
+                        ]
+                    ],
+                    "label": "0"
+                },
+                {
+                    "strands": [
+                        [
+                            0,
+                            "One-first"
+                        ],
+                        [
+                            2,
+                            "One-second"
+                        ]
+                    ],
+                    "label": "1"
+                }
             ]
         },
         "Toehold": {
             "domains": [
                 "6"
-            ]
+            ],
+            "strand_labels": []
         }
     },
     "strand_types": {
