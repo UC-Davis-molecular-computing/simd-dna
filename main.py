@@ -545,8 +545,9 @@ class Register:
             color = convert_hex_to_rgb(strand.color)
             previous_left = self._svg_left_offset + (previous_domains - 1) * self._svg_domain_length
             right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
+            right_minus = str(float(right[:-2]) - 0.5) + "mm"
             last_index = last_covering['start_index'] + len(strand.domains)
-            last_right = str(float(right[:-2]) + (last_index - previous_domains) * self._svg_domain_length) + "mm"
+            last_right = str(float(right_minus[:-2]) + (last_index - previous_domains) * self._svg_domain_length) + "mm"
             upper_y = str(self._svg_vertical_offset -
                           (layer + (last_index - previous_domains)) * self._svg_domain_length) + "mm"
 
@@ -562,11 +563,11 @@ class Register:
 
             if last_index > previous_domains:
                 if strand.is_complementary:
-                    self._dwg.add(self._dwg.line((right, y), (last_right, upper_y), stroke=color,
+                    self._dwg.add(self._dwg.line((right_minus, y), (last_right, upper_y), stroke=color,
                                                  stroke_width="1mm", stroke_dasharray="4,2"))
                 else:
                     self._svg_draw_upper_right_arrow(float(last_right[:-2]), float(upper_y[:-2]), color)
-                    self._dwg.add(self._dwg.line((right, y), (last_right, upper_y), stroke=color,
+                    self._dwg.add(self._dwg.line((right_minus, y), (last_right, upper_y), stroke=color,
                                                  stroke_width="1mm"))
 
     def _svg_draw_cell_strand_labels(self):
