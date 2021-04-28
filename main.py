@@ -444,21 +444,21 @@ class Register:
         previous_domains = 0
         current_start = None
         current_strand = None
+        crossover_start = None
+        crossover_strand = None
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
                 left = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
-                right = str(left + self._svg_domain_length) + "mm"
                 short_right = str(left + 3 * self._svg_domain_length // 5) + "mm"
                 short_left = str(left + self._svg_domain_length // 3) + "mm"
-                left = str(left) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True,
                                                                                             strand_set=strand_set)
                 strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
                 color = 'rgb(0, 0, 0)' if strand is None else convert_hex_to_rgb(strand.color)
-                if len(orthogonal_coverings) >= 1:
+                if len(orthogonal_coverings) >= 1 and crossover_start is None:
                     orthogonal_strand = orthogonal_coverings[0]
                     orthogonal_color = strand_types[orthogonal_strand['strand_name']].color
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
@@ -505,7 +505,38 @@ class Register:
                                                          stroke=orthogonal_color,
                                                          stroke_width="1mm"))
 
-                if len(domain_coverings) == 1:
+                if len(domain_coverings) > 1 or crossover_start is not None:
+                    if crossover_start is None:
+                        crossover_start = short_left
+                        crossover_strand = domain_coverings[1]['strand_name']
+                        crossover_domain_count = 0
+
+                    next_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i + 1,
+                                                                                              include_orthogonal=True,
+                                                                                              strand_set=strand_set)
+                    crossover_domain_count += 1
+
+                    if len(next_coverings) + len(orthogonal_coverings) <= 1:
+                        first_color = strand_types[current_strand].color
+                        second_color = strand_types[crossover_strand].color
+                        left_minus = str(float(crossover_start[:-2]) - 0.5) + "mm"
+                        right_plus = str(float(short_right[:-2]) + 0.5) + "mm"
+                        top_y = str(float(y[:-2]) - (crossover_domain_count - 0.5) * self._svg_domain_length) + "mm"
+                        self._svg_draw_horizontal_line(strand, current_start, crossover_start, y, first_color, False)
+                        self._dwg.add(self._dwg.line((left_minus, top_y), (right_plus, y),
+                                                     stroke=second_color,
+                                                     stroke_width="1mm"))
+                        self._svg_draw_upper_right_arrow(float(right_plus[:-2]), float(top_y[:-2]),
+                                                         first_color)
+                        self._dwg.add(self._dwg.line((left_minus, y), (right_plus, top_y),
+                                                     stroke=first_color,
+                                                     stroke_width="1mm"))
+
+                        current_start = short_right
+                        current_strand = crossover_strand
+                        crossover_start = None
+                        crossover_strand = None
+                elif len(domain_coverings) == 1:
                     index = previous_domains + i - domain_coverings[0]['start_index']
                     if current_start is None:
                         current_start = short_left
@@ -513,29 +544,9 @@ class Register:
                         if strand.is_complementary and index == 0:
                             self._svg_draw_left_arrow(float(current_start[:-2]), int(y[:-2]), color)
                     elif index == len(strand.domains) - 1:
-                        if current_start is None:  # temp fix
-                            current_start = short_left
-                            current_strand = domain_coverings[0]['strand_name']
-
-                        if strand.is_complementary:
-                            self._dwg.add(
-                                self._dwg.line((current_start, y), (short_right, y), stroke=color,
-                                               stroke_width="1mm", stroke_dasharray="4,2"))
-                        else:
-                            self._svg_draw_right_arrow(int(short_right[:-2]), int(y[:-2]), color)
-                            self._dwg.add(
-                                self._dwg.line((current_start, y), (short_right, y), stroke=color,
-                                               stroke_width="1mm"))
+                        self._svg_draw_horizontal_line(strand, current_start, short_right, y, color, True)
                         current_start = None
                         current_strand = None
-                elif len(domain_coverings) > 1:
-                    y1 = str(self._svg_vertical_offset - (layer - 1) * self._svg_domain_length) + "mm"
-                    y2 = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
-                    next_strand = strand_types[domain_coverings[1]['strand_name']]
-                    self._dwg.add(self._dwg.line((left, y2), (right, y1), stroke=color,
-                                                 stroke_width="1mm"))
-                    self._dwg.add(self._dwg.line((left, y1), (right, y2), stroke=convert_hex_to_rgb(next_strand.color),
-                                                 stroke_width="1mm"))
 
             previous_domains += len(cell.domains)
 
@@ -569,6 +580,18 @@ class Register:
                     self._svg_draw_upper_right_arrow(float(last_right[:-2]), float(upper_y[:-2]), color)
                     self._dwg.add(self._dwg.line((right_minus, y), (last_right, upper_y), stroke=color,
                                                  stroke_width="1mm"))
+
+    def _svg_draw_horizontal_line(self, strand, current_start, short_right, y, color, draw_arrow_head):
+        if strand.is_complementary:
+            self._dwg.add(
+                self._dwg.line((current_start, y), (short_right, y), stroke=color,
+                               stroke_width="1mm", stroke_dasharray="4,2"))
+        else:
+            if draw_arrow_head:
+                self._svg_draw_right_arrow(int(short_right[:-2]), int(y[:-2]), color)
+            self._dwg.add(
+                self._dwg.line((current_start, y), (short_right, y), stroke=color,
+                               stroke_width="1mm"))
 
     def _svg_draw_cell_strand_labels(self):
         global cell_types
