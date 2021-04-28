@@ -363,6 +363,7 @@ class Register:
             if add_strand:
                 sanitized_strands.append(strand)
 
+        sanitized_strands.sort(key=lambda x: x['start_index'])
         return sanitized_strands
 
     @staticmethod
@@ -462,23 +463,23 @@ class Register:
                     orthogonal_color = strand_types[orthogonal_strand['strand_name']].color
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
                     previous_left = self._svg_left_offset + (i - 1 + previous_domains) * self._svg_domain_length
-                    previous_right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
+                    right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
 
                     if current_start is not None and orthogonal_strand['strand_name'] == current_strand:
                         if strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._dwg.add(
-                                self._dwg.line((current_start, y), (previous_right, y), stroke=orthogonal_color,
+                                self._dwg.line((current_start, y), (right, y), stroke=orthogonal_color,
                                                stroke_width="1mm", stroke_dasharray="4,2"))
                         else:
                             self._dwg.add(
-                                self._dwg.line((current_start, y), (previous_right, y), stroke=orthogonal_color,
+                                self._dwg.line((current_start, y), (right, y), stroke=orthogonal_color,
                                                stroke_width="1mm"))
                         current_start = None
                         current_strand = None
 
                     if point_right:
-                        right_minus = str(float(previous_right[:-2]) - 0.5 + self._svg_domain_length) + "mm"
-                        previous_right_minus = str(float(previous_right[:-2]) - 0.5) + "mm"
+                        right_minus = str(float(right[:-2]) - 0.5 + self._svg_domain_length) + "mm"
+                        previous_right_minus = str(float(right[:-2]) - 0.5) + "mm"
                         if strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._dwg.add(self._dwg.line((previous_right_minus, y), (right_minus, upper_y),
                                                          stroke=orthogonal_color,
@@ -542,28 +543,30 @@ class Register:
             last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
             color = convert_hex_to_rgb(strand.color)
-            previous_left = self._svg_left_offset + (i - 1 + previous_domains) * self._svg_domain_length
-            previous_right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
+            previous_left = self._svg_left_offset + (previous_domains - 1) * self._svg_domain_length
+            right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
+            last_index = last_covering['start_index'] + len(strand.domains)
+            last_right = str(float(right[:-2]) + (last_index - previous_domains) * self._svg_domain_length) + "mm"
+            upper_y = str(self._svg_vertical_offset -
+                          (layer + (last_index - previous_domains)) * self._svg_domain_length) + "mm"
 
             if current_start is not None:
                 if strand.is_complementary:
                     self._dwg.add(
-                        self._dwg.line((current_start, y), (previous_right, y), stroke=color,
+                        self._dwg.line((current_start, y), (right, y), stroke=color,
                                        stroke_width="1mm", stroke_dasharray="4,2"))
                 else:
                     self._dwg.add(
-                        self._dwg.line((current_start, y), (previous_right, y), stroke=color,
+                        self._dwg.line((current_start, y), (right, y), stroke=color,
                                        stroke_width="1mm"))
 
-            for i in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
-                right = str(float(previous_right[:-2]) - 0.5 + self._svg_domain_length) + "mm"
-                previous_right_minus = str(float(previous_right[:-2]) - 0.5) + "mm"
+            if last_index > previous_domains:
                 if strand.is_complementary:
-                    self._dwg.add(self._dwg.line((previous_right_minus, y), (right, upper_y), stroke=color,
+                    self._dwg.add(self._dwg.line((right, y), (last_right, upper_y), stroke=color,
                                                  stroke_width="1mm", stroke_dasharray="4,2"))
                 else:
-                    self._svg_draw_upper_right_arrow(float(right[:-2]), float(upper_y[:-2]), color)
-                    self._dwg.add(self._dwg.line((previous_right_minus, y), (right, upper_y), stroke=color,
+                    self._svg_draw_upper_right_arrow(float(last_right[:-2]), float(upper_y[:-2]), color)
+                    self._dwg.add(self._dwg.line((right, y), (last_right, upper_y), stroke=color,
                                                  stroke_width="1mm"))
 
     def _svg_draw_cell_strand_labels(self):
