@@ -108,7 +108,7 @@
         }
     },
     "registers": {
-        "Test": {
+        "Rule110": {
             "cells": [
                 "Bit",
                 "Bit",
