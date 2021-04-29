@@ -946,7 +946,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     cell_types = {}
     strand_types = {}
     registers = {}
-    instructions = {}
+    instructions = []
 
     # Create cell type
     tape_cell = Cell([])
@@ -1040,11 +1040,24 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
 
     label_template['strands'].append([current_index, 'symbol_covered'])
     for i in range(len(transition_data)):
-        configuration_label = copy.deepcopy(label_template)
-        configuration_label['strands'][i][0] += 1
-        configuration_label['strands'][i][1] = configuration_label['strands'][i][1].replace('full', 'open')
-        configuration_label['label'] = '({},{})'.format(*list(transition_data.keys())[i])
-        cell_types['Tape cell'].strand_labels.append(configuration_label)
+        label_string = '({},{})'.format(*list(transition_data.keys())[i])
+        
+        open_label = copy.deepcopy(label_template)
+        open_label['strands'][i][0] += 1
+        open_label['strands'][i][1] = open_label['strands'][i][1].replace('full', 'open')
+        open_label['label'] = label_string
+        cell_types['Tape cell'].strand_labels.append(open_label)
+
+        plug_label = copy.deepcopy(label_template)
+        plug_label['strands'][i][1] = plug_label['strands'][i][1].replace('full', 'plug')
+        plug_label['label'] = label_string
+        cell_types['Tape cell'].strand_labels.append(plug_label)
+
+        final_label = copy.deepcopy(label_template)
+        final_label['strands'][i][0] += -1
+        final_label['strands'][i][1] = final_label['strands'][i][1].replace('full', 'final')
+        final_label['label'] = label_string
+        cell_types['Tape cell'].strand_labels.append(final_label)
 
     # Encode register data
     registers[register_name] = Register()
@@ -1097,6 +1110,8 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
                 insert_one_symbol(registers[register_name].coverings, current_index)
             current_index += 8
 
+    generate_tm_instructions(transition_data, tm_data)
+
 
 def insert_blank_symbol(coverings, current_index):
     coverings.append({
@@ -1131,6 +1146,7 @@ def insert_zero_symbol(coverings, current_index):
         'strand_name': 'symbol_678'
     })
 
+
 def insert_one_symbol(coverings, current_index):
     coverings.append({
         'start_index': current_index,
@@ -1141,6 +1157,37 @@ def insert_one_symbol(coverings, current_index):
         'start_index': current_index,
         'strand_name': 'symbol_345678'
     })
+
+
+def generate_tm_instructions(transition_data, tm_data):
+    global strand_types, instructions
+    for configuration in transition_data.keys():
+        domains = []
+        color = strand_types['({},{})_full'.format(*configuration)].color
+        for i in range(1, 4):
+            domains.append('({},{})-{}'.format(*configuration, i))
+        domains.append('9')
+        plug = Strand(domains, False, color)
+        strand_types['({},{})_plug'.format(*configuration)] = plug
+        unplug = copy.deepcopy(plug)
+        unplug.is_complementary = True
+        strand_types['({},{})_unplug'.format(*configuration)] = unplug
+
+        domains = copy.deepcopy(domains)
+        domains.pop()
+        domains.insert(0, '10')
+        final = Strand(domains, False, color)
+        strand_types['({},{})_final'.format(*configuration)] = final
+        restart = copy.deepcopy(final)
+        restart.is_complementary = True
+        strand_types['({},{})_restart'.format(*configuration)] = restart
+
+    first_plug_instruction = []
+    for configuration in list(transition_data.keys())[1:]:
+        first_plug_instruction.append('({},{})_plug'.format(*configuration))
+
+    if len(first_plug_instruction) > 0:
+        instructions.append(first_plug_instruction)
 
 
 def exit_loop():
