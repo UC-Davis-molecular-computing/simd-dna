@@ -845,7 +845,7 @@ def run_simulation():
         print("Final result")
         register.print()
         print()
-        register.svg_draw_contents(label="Final result")
+        register.svg_draw_contents(register_key, label="Final result")
         register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
@@ -953,26 +953,26 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     domain_template = '({},{})-{}'
     for key in transition_data.keys():
         for i in range(1, 4):
-            tape_cell.domains.append(domain_template.format(key[0], key[1], i))
+            tape_cell.domains.append(domain_template.format(*key, i))
 
     for i in range(1, 9):
         tape_cell.domains.append(str(i))
 
     cell_types['Tape cell'] = tape_cell
 
+    # Add basic strand types
     strand_name_template = '({},{})_{}'
     strand_data = Strand([], False)
-    # Add basic strand types
     for key in transition_data.keys():
-        full_key = strand_name_template.format(key[0], key[1], 'full')
+        full_key = strand_name_template.format(*key, 'full')
         strand_types[full_key] = copy.deepcopy(strand_data)
         for i in range(1, 4):
-            strand_types[full_key].domains.append(domain_template.format(key[0], key[1], i))
+            strand_types[full_key].domains.append(domain_template.format(*key, i))
 
-        open_key = strand_name_template.format(key[0], key[1], 'open')
+        open_key = strand_name_template.format(*key, 'open')
         strand_types[open_key] = copy.deepcopy(strand_data)
         for i in range(2, 4):
-            strand_types[open_key].domains.append(domain_template.format(key[0], key[1], i))
+            strand_types[open_key].domains.append(domain_template.format(*key, i))
 
     # Strand patterns
     # Blank - 123,456,78
@@ -1024,12 +1024,12 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
                 has_valid_initial_transition = True
                 registers[register_name].coverings.append({
                     'start_index': current_index + 1,
-                    'strand_name': '({},{})_open'.format(configuration[0], configuration[1])
+                    'strand_name': '({},{})_open'.format(*configuration)
                 })
             else:
                 registers[register_name].coverings.append({
                     'start_index': current_index ,
-                    'strand_name': '({},{})_full'.format(configuration[0], configuration[1])
+                    'strand_name': '({},{})_full'.format(*configuration)
                 })
 
             current_index += 3
@@ -1051,7 +1051,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
             for configuration in transition_data.keys():
                 registers[register_name].coverings.append({
                     'start_index': current_index,
-                    'strand_name': '({},{})_full'.format(configuration[0], configuration[1])
+                    'strand_name': '({},{})_full'.format(*configuration)
                 })
                 current_index += 3
             if symbol == tm_data['blank']:
