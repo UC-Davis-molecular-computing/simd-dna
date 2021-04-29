@@ -3,6 +3,7 @@ import sys
 import json
 import svgwrite
 import re
+import ruamel.yaml as yaml
 from json import JSONEncoder
 
 program_loop = True
@@ -886,6 +887,67 @@ def toggle_show_unused_instruction_strands():
     show_unused_instruction_strands = not show_unused_instruction_strands
 
 
+def convert_tm_to_simd():
+    filename = input('Enter the YAML file name: ')
+    with open(filename, 'r') as file:
+        data = yaml.safe_load(file)
+        blank = data['blank']
+
+        state_table_contains_unsupported_character = False
+        transition_data = {}
+        table = data['table']
+        for state in table.keys():
+            if state_table_contains_unsupported_character:
+                break
+
+            transition = table[state]
+            if transition is not None:
+                for key in transition.keys():
+                    if type(key) is tuple:
+                        if contains_outside_list(key, ['0', '1', blank]):
+                            state_table_contains_unsupported_character = True
+                            break
+                        else:
+                            for item in key:
+                                add_simd_transition(state, item, transition[key], transition_data)
+                    else:
+                        if key not in ['0', '1', blank]:
+                            state_table_contains_unsupported_character = True
+                            break
+                        else:
+                            add_simd_transition(state, key, transition[key], transition_data)
+
+        if re.sub(rf'[{blank}01]', '', data['input']) != '' or state_table_contains_unsupported_character:
+            print('Sorry, the TM conversion algorithm only supports the blank, 0, and 1 alphabet symbols.')
+            return
+
+        generate_tm_to_simd_data_from_transitions(transition_data)
+
+
+def contains_outside_list(items, restricted_chars):
+    for item in items:
+        if item not in restricted_chars:
+            return True
+
+    return False
+
+
+def add_simd_transition(state, read, data, transition_data):
+    key = (state, read)
+    if 'write' not in data.keys():
+        data['write'] = read
+
+    transition_data[key] = data
+
+
+def generate_tm_to_simd_data_from_transitions(transition_data):
+    global cell_types, registers, strand_types, instructions
+    cell_types = {}
+    strand_types = {}
+    registers = {}
+    instructions = {}
+
+
 def exit_loop():
     global program_loop
     program_loop = False
@@ -920,7 +982,8 @@ def simd_simulator(args):
                    '8': toggle_step_by_step_simulation,
                    '9': toggle_keep_results,
                    '10': toggle_show_unused_instruction_strands,
-                   '11': exit_loop}
+                   '11': convert_tm_to_simd,
+                   '12': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -936,7 +999,8 @@ def simd_simulator(args):
                            'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
                        '''10 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
                                      else 'Show unused instruction strands\n') +
-                       '''11 - Exit
+                       '''11 - Convert turingmachine.io Turing machine to SIMD register
+12 - Exit
 
 ''')
 
