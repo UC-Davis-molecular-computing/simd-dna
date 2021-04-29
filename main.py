@@ -66,7 +66,7 @@ class Register:
 
     def add_cell(self, cell_name):
         self.cells.append(cell_name)
-        self._total_domains += cell_types[cell_name]["domains"]
+        self._total_domains += len(cell_types[cell_name].domains)
 
     def get_cell_at_domain_index(self, domain_index):
         total_domains = 0
@@ -921,7 +921,8 @@ def convert_tm_to_simd():
             print('Sorry, the TM conversion algorithm only supports the blank, 0, and 1 alphabet symbols.')
             return
 
-        generate_tm_to_simd_data_from_transitions(transition_data)
+        register_name = input('What name would you like to give the register? ')
+        generate_tm_to_simd_data_from_transitions(transition_data, data, register_name)
 
 
 def contains_outside_list(items, restricted_chars):
@@ -940,12 +941,171 @@ def add_simd_transition(state, read, data, transition_data):
     transition_data[key] = data
 
 
-def generate_tm_to_simd_data_from_transitions(transition_data):
+def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register_name):
     global cell_types, registers, strand_types, instructions
     cell_types = {}
     strand_types = {}
     registers = {}
     instructions = {}
+
+    # Create cell type
+    tape_cell = Cell([])
+    domain_template = '({},{})-{}'
+    for key in transition_data.keys():
+        for i in range(1, 4):
+            tape_cell.domains.append(domain_template.format(key[0], key[1], i))
+
+    for i in range(1, 9):
+        tape_cell.domains.append(str(i))
+
+    cell_types['Tape cell'] = tape_cell
+
+    strand_name_template = '({},{})_{}'
+    strand_data = Strand([], False)
+    # Add basic strand types
+    for key in transition_data.keys():
+        full_key = strand_name_template.format(key[0], key[1], 'full')
+        strand_types[full_key] = copy.deepcopy(strand_data)
+        for i in range(1, 4):
+            strand_types[full_key].domains.append(domain_template.format(key[0], key[1], i))
+
+        open_key = strand_name_template.format(key[0], key[1], 'open')
+        strand_types[open_key] = copy.deepcopy(strand_data)
+        for i in range(2, 4):
+            strand_types[open_key].domains.append(domain_template.format(key[0], key[1], i))
+
+    # Strand patterns
+    # Blank - 123,456,78
+    # Zero - 123,45,678
+    # One - 12,345678
+
+    strand_types['symbol_covered'] = copy.deepcopy(strand_data)
+    for i in range(1, 9):
+        strand_types['symbol_covered'].domains.append(str(i))
+
+    strand_types['symbol_12'] = copy.deepcopy(strand_data)
+    for i in range(1, 3):
+        strand_types['symbol_12'].domains.append(str(i))
+
+    strand_types['symbol_345678'] = copy.deepcopy(strand_data)
+    for i in range(3, 9):
+        strand_types['symbol_345678'].domains.append(str(i))
+
+    strand_types['symbol_123'] = copy.deepcopy(strand_data)
+    for i in range(1, 4):
+        strand_types['symbol_123'].domains.append(str(i))
+
+    strand_types['symbol_45'] = copy.deepcopy(strand_data)
+    for i in range(4, 6):
+        strand_types['symbol_45'].domains.append(str(i))
+
+    strand_types['symbol_678'] = copy.deepcopy(strand_data)
+    for i in range(6, 9):
+        strand_types['symbol_678'].domains.append(str(i))
+
+    strand_types['symbol_456'] = copy.deepcopy(strand_data)
+    for i in range(4, 7):
+        strand_types['symbol_456'].domains.append(str(i))
+
+    strand_types['symbol_78'] = copy.deepcopy(strand_data)
+    for i in range(7, 9):
+        strand_types['symbol_78'].domains.append(str(i))
+
+    # Encode register data
+    registers[register_name] = Register()
+    if len(tm_data['input']) > 0:
+        registers[register_name].add_cell('Tape cell')
+        initial_symbol = tm_data['input'][0]
+        initial_configuration = (tm_data['start state'], initial_symbol)
+        current_index = 0
+        has_valid_initial_transition = False
+        for configuration in transition_data.keys():
+            if initial_configuration == configuration:
+                has_valid_initial_transition = True
+                registers[register_name].coverings.append({
+                    'start_index': current_index + 1,
+                    'strand_name': '({},{})_open'.format(configuration[0], configuration[1])
+                })
+            else:
+                registers[register_name].coverings.append({
+                    'start_index': current_index ,
+                    'strand_name': '({},{})_full'.format(configuration[0], configuration[1])
+                })
+
+            current_index += 3
+        if has_valid_initial_transition:
+            registers[register_name].coverings.append({
+                'start_index': current_index,
+                'strand_name': 'symbol_covered'
+            })
+        elif initial_symbol == tm_data['blank']:
+            insert_blank_symbol(registers[register_name].coverings, current_index)
+        elif initial_symbol == '0':
+            insert_zero_symbol(registers[register_name].coverings, current_index)
+        else:
+            insert_one_symbol(registers[register_name].coverings, current_index)
+        current_index += 8
+        for i in range(1, len(tm_data['input'])):
+            symbol = tm_data['input'][i]
+            registers[register_name].add_cell('Tape cell')
+            for configuration in transition_data.keys():
+                registers[register_name].coverings.append({
+                    'start_index': current_index,
+                    'strand_name': '({},{})_full'.format(configuration[0], configuration[1])
+                })
+                current_index += 3
+            if symbol == tm_data['blank']:
+                insert_blank_symbol(registers[register_name].coverings, current_index)
+            elif symbol == '0':
+                insert_zero_symbol(registers[register_name].coverings, current_index)
+            else:
+                insert_one_symbol(registers[register_name].coverings, current_index)
+            current_index += 8
+
+
+def insert_blank_symbol(coverings, current_index):
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_123'
+    })
+    current_index += 3
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_456'
+    })
+    current_index += 3
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_78'
+    })
+
+
+def insert_zero_symbol(coverings, current_index):
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_123'
+    })
+    current_index += 3
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_45'
+    })
+    current_index += 2
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_678'
+    })
+
+def insert_one_symbol(coverings, current_index):
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_12'
+    })
+    current_index += 2
+    coverings.append({
+        'start_index': current_index,
+        'strand_name': 'symbol_345678'
+    })
 
 
 def exit_loop():
