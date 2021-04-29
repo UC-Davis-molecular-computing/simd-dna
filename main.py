@@ -1011,6 +1011,41 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     for i in range(7, 9):
         strand_types['symbol_78'].domains.append(str(i))
 
+    # Add cell labels
+    label_template = {'strands': [], 'label': ''}
+    current_index = 0
+    for configuration in transition_data.keys():
+        label_template['strands'].append([current_index, '({},{})_full'.format(*configuration)])
+        current_index += 3
+
+    blank_label = copy.deepcopy(label_template)
+    blank_label['label'] = tm_data['blank'] if tm_data['blank'] != ' ' else '␣'
+    blank_label['strands'].append([current_index, 'symbol_123'])
+    blank_label['strands'].append([current_index + 3, 'symbol_456'])
+    blank_label['strands'].append([current_index + 6, 'symbol_78'])
+    cell_types['Tape cell'].strand_labels.append(blank_label)
+
+    zero_label = copy.deepcopy(label_template)
+    zero_label['label'] = '0'
+    zero_label['strands'].append([current_index, 'symbol_123'])
+    zero_label['strands'].append([current_index + 3, 'symbol_45'])
+    zero_label['strands'].append([current_index + 5, 'symbol_678'])
+    cell_types['Tape cell'].strand_labels.append(zero_label)
+
+    one_label = copy.deepcopy(label_template)
+    one_label['label'] = '1'
+    one_label['strands'].append([current_index, 'symbol_12'])
+    one_label['strands'].append([current_index + 2, 'symbol_345678'])
+    cell_types['Tape cell'].strand_labels.append(one_label)
+
+    label_template['strands'].append([current_index, 'symbol_covered'])
+    for i in range(len(transition_data)):
+        configuration_label = copy.deepcopy(label_template)
+        configuration_label['strands'][i][0] += 1
+        configuration_label['strands'][i][1] = configuration_label['strands'][i][1].replace('full', 'open')
+        configuration_label['label'] = '({},{})'.format(*list(transition_data.keys())[i])
+        cell_types['Tape cell'].strand_labels.append(configuration_label)
+
     # Encode register data
     registers[register_name] = Register()
     if len(tm_data['input']) > 0:
