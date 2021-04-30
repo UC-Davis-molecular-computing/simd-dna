@@ -958,6 +958,8 @@ def add_simd_transition(state, read, data, transition_data):
     key = (state, read)
     if 'write' not in data.keys():
         data['write'] = read
+    else:
+        data['write'] = str(data['write'])
 
     transition_data[key] = data
 
