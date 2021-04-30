@@ -54,7 +54,7 @@ class Cell:
 class Register:
     _svg_domain_length = 5  # millimeters
     _svg_left_offset = 40
-    _svg_cell_label_height_offset = 3
+    _svg_cell_label_height_offset = 5
     _svg_cell_height = 40
 
     def __init__(self):
@@ -403,8 +403,8 @@ class Register:
 
     def _svg_draw_register_outline(self, label):
         if label is not None:
-            self._dwg.add(self._dwg.text(label, x=[str(int(self._svg_left_offset * 3.7995 / 2))],
-                                         y=[str(int(3.7995 * (self._svg_vertical_offset - self._svg_cell_height / 2)))],
+            self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_left_offset / 2)) + "mm"],
+                                         y=[str(float((self._svg_vertical_offset - self._svg_cell_height / 2))) + "mm"],
                                          fill=svgwrite.rgb(0, 0, 0),
                                          style="text-anchor:middle;dominant-baseline:middle"))
 
@@ -624,10 +624,10 @@ class Register:
                 left = previous_domains * self._svg_domain_length
                 right = left + len(cell.domains) * self._svg_domain_length
                 x = ((left + right) / 2) + self._svg_left_offset
-                x = int(x * 3.7995)
+                x = str(x) + "mm"
                 self._dwg.add(self._dwg.text(labels[0], x=[x],
-                                             y=[str(int(3.7995 * (self._svg_vertical_offset +
-                                                                  self._svg_cell_label_height_offset)))],
+                                             y=[str(float((self._svg_vertical_offset +
+                                                           self._svg_cell_label_height_offset))) + "mm"],
                                              fill=svgwrite.rgb(0, 0, 0),
                                              style="text-anchor:middle;dominant-baseline:middle"))
 
