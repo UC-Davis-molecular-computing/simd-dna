@@ -1259,7 +1259,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
         strand_types['one_left_start'] = Strand(domains, False, color)
         strand_types['one_left_strip'] = Strand(domains, True, color)
 
-    # Add instructions for when right cell is zero
+    # Add instructions for when left cell is zero
     next_index = configurations.index((next_state, '0')) \
         if (next_state, '0') in configurations else -1
     if next_index == -1:
@@ -1304,7 +1304,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
         new_cell_instructions.append('symbol_covered')
         instructions.append(new_cell_instructions)
 
-    # Add instructions for when right cell is one
+    # Add instructions for when left cell is one
     next_index = configurations.index((next_state, '1')) \
         if (next_state, '1') in configurations else -1
     instructions.append(['one_left_strip'])
@@ -1349,7 +1349,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
         new_cell_instructions.append('symbol_covered')
         instructions.append(new_cell_instructions)
 
-    # Add instructions for when right cell is blank
+    # Add instructions for when left cell is blank
     next_index = configurations.index((next_state, tm_data['blank'])) \
         if (next_state, tm_data['blank']) in configurations else -1
 
