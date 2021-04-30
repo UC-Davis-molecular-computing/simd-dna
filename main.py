@@ -604,11 +604,18 @@ class Register:
             for i in range(len(labels)):
                 label = labels[i]
                 for strand in label['strands']:
-                    domain_coverings = self.get_coverings_at_domain_index(previous_domains + strand[0])
+                    if previous_domains + strand[0] < 0:
+                        continue # todo: handle negative indices
+
+                    domain_coverings, orthogonal_coverings\
+                        = self.get_coverings_at_domain_index(previous_domains + strand[0], True)
                     domain_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
                                                    domain_coverings))
                     domain_coverings = [d['strand_name'] for d in domain_coverings]
-                    if strand[1] not in domain_coverings:
+                    orthogonal_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
+                                                orthogonal_coverings))
+                    orthogonal_coverings = [d['strand_name'] for d in orthogonal_coverings]
+                    if strand[1] not in domain_coverings and strand[1] not in orthogonal_coverings:
                         is_match[i] = False
                         break
 
