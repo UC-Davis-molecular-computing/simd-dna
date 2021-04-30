@@ -1168,7 +1168,8 @@ def insert_one_symbol(coverings, current_index):
 
 def generate_tm_instructions(transition_data, tm_data):
     global strand_types, instructions
-    for configuration in transition_data.keys():
+    configurations = list(transition_data.keys())
+    for configuration in configurations:
         domains = []
         color = strand_types['({},{})_full'.format(*configuration)].color
         for i in range(1, 4):
@@ -1191,10 +1192,10 @@ def generate_tm_instructions(transition_data, tm_data):
 
     num_configurations = len(transition_data)
     for i in range(num_configurations):
-        configuration = list(transition_data.keys())[i]
+        configuration = configurations[i]
         first_instruction = []
         if i == 0:
-            for other_conf in list(transition_data.keys())[1:]:
+            for other_conf in configurations[1:]:
                 first_instruction.append('({},{})_plug'.format(*other_conf))
         else:
             first_instruction.append('({},{})_unplug'.format(*configuration))
@@ -1207,6 +1208,12 @@ def generate_tm_instructions(transition_data, tm_data):
             create_left_instruction(i, num_configurations, configuration, transition, transition_data, tm_data)
         else:
             create_right_instruction(i, num_configurations, configuration, transition, transition_data, tm_data)
+
+    # Restart instruction
+    instructions.append(['({},{})_restart'.format(*c) for c in configurations])
+
+    # Reapply open instructions
+    instructions.append(['({},{})_open'.format(*c) for c in configurations])
 
 
 def create_left_instruction(index, num_configurations, configuration, transition, transition_data, tm_data):
@@ -1273,8 +1280,8 @@ def create_right_instruction(index, num_configurations, configuration, transitio
 
     # Replace current cell coverings
     replacement_instructions = []
-    for configuration in configurations:
-        replacement_instructions.append('({},{})_full'.format(*configuration))
+    for current_configuration in configurations:
+        replacement_instructions.append('({},{})_full'.format(*current_configuration))
 
     if write_symbol == tm_data['blank']:
         replacement_instructions.append('symbol_123')
@@ -1294,6 +1301,124 @@ def create_right_instruction(index, num_configurations, configuration, transitio
         replacement_instructions.append('symbol_34567')
 
     instructions.append(replacement_instructions)
+
+    # Displace right cell contents
+    next_right_instructions = []
+    if '({},{})_next_right'.format(*configurations[0]) not in strand_types.keys():
+        for i in range(len(configurations)):
+            domains = ['8' if i == 0 else '({},{})-3'.format(*configurations[i - 1])]
+            current_configuration = configurations[i]
+            for j in range(1, 3):
+                domains.append('({},{})-{}'.format(*current_configuration, j))
+            domains.append('11')
+            strand_name = '({},{})_next_right'.format(*current_configuration)
+            color = strand_types['({},{})_full'.format(*current_configuration)].color
+            strand_types[strand_name] = Strand(domains, False, color)
+            strand_strip_name = '({},{})_next_right_strip'.format(*current_configuration)
+            strand_types[strand_strip_name] = Strand(domains, True, color)
+
+        last_configuration = configurations[num_configurations - 1]
+        domains = ['({},{})-3'.format(*last_configuration), '1', '2', '11']
+        strand_types['next_right_1'] = Strand(domains, False)
+        strand_types['next_right_1_strip'] = Strand(domains, True)
+        strand_types['next_right_2'] = Strand(['3', '4', '5', '11'], False)
+        strand_types['next_right_2_strip'] = Strand(strand_types['next_right_2'].domains, True)
+
+    for current_configuration in configurations:
+        next_right_instructions.append('({},{})_next_right'.format(*current_configuration))
+    next_right_instructions.append('next_right_1')
+    next_right_instructions.append('next_right_2')
+
+    instructions.append(next_right_instructions)
+
+    # Add instructions for when right cell is blank
+    next_index = configurations.index((next_state, tm_data['blank']))\
+        if (next_state, tm_data['blank']) in configurations else -1
+    first_configuration = configurations[0]
+    if 'right_blank' not in strand_types.keys():
+        domains = ['4', '5', '6', '12']
+        strand_types['right_blank'] = Strand(domains, False)
+        strand_types['right_blank_strip'] = Strand(domains, True)
+        domains = ['8']
+        for i in range(1, 4):
+            domains.append('({},{})-{}'.format(*first_configuration, i))
+        domains.append('12')
+        color = strand_types['({},{})_full'.format(*first_configuration)].color
+        strand_types['8_right_plug'] = Strand(domains, False, color)
+        strand_types['8_right_plug_strip'] = Strand(domains, True, color)
+    blank_instructions = ['8_right_plug']
+    for i in range(1, len(configurations)):
+        current_configuration = configurations[i]
+        strand_type = '({},{})_full' if i != next_index else '({},{})_final'
+        blank_instructions.append(strand_type.format(*current_configuration))
+    blank_instructions.append('symbol_123')
+    blank_instructions.append('right_blank')
+    instructions.append(blank_instructions)
+    instructions.append(['right_blank_strip'])
+    instructions.append(['symbol_456' if next_index == -1 else 'symbol_covered'])
+    instructions.append(['8_right_plug_strip'])
+    last_blank_instruction = []
+    if write_symbol == tm_data['blank']:
+        last_blank_instruction.append('symbol_78')
+    elif write_symbol == '0':
+        last_blank_instruction.append('symbol_678')
+    else:
+        last_blank_instruction.append('symbol_345678')
+    strand_type = '({},{})_final' if next_index == 0 else '({},{})_full'
+    last_blank_instruction.append(strand_type.format(*first_configuration))
+    instructions.append(last_blank_instruction)
+
+    # Add instructions for when right cell is zero
+    next_index = configurations.index((next_state, '0')) \
+        if (next_state, tm_data['blank']) in configurations else -1
+    instructions.append(['next_right_2_strip'])
+    if next_index == -1:
+        instructions.append(['symbol_123', 'symbol_45'])
+    else:
+        instructions.append(['symbol_covered'])
+    zero_instructions = ['8_right_plug']
+    for i in range(1, len(configurations)):
+        current_configuration = configurations[i]
+        strand_type = '({},{})_full' if i != next_index else '({},{})_final'
+        zero_instructions.append(strand_type.format(*current_configuration))
+    instructions.append(zero_instructions)
+    instructions.append(['8_right_plug_strip'])
+    last_zero_instruction = []
+    if write_symbol == tm_data['blank']:
+        last_zero_instruction.append('symbol_78')
+    elif write_symbol == '0':
+        last_zero_instruction.append('symbol_678')
+    else:
+        last_zero_instruction.append('symbol_345678')
+    strand_type = '({},{})_final' if next_index == 0 else '({},{})_full'
+    last_zero_instruction.append(strand_type.format(*first_configuration))
+    instructions.append(last_zero_instruction)
+
+    # Add instructions for when right cell is one
+    next_index = configurations.index((next_state, '1')) \
+        if (next_state, tm_data['blank']) in configurations else -1
+    one_instructions = []
+    for current_configuration in configurations:
+        one_instructions.append('({},{})_next_right_strip'.format(*current_configuration))
+    one_instructions.append('next_right_1_strip')
+    instructions.append(one_instructions)
+    next_one_instruction = []
+    if write_symbol == tm_data['blank']:
+        next_one_instruction.append('symbol_78')
+    elif write_symbol == '0':
+        next_one_instruction.append('symbol_678')
+    else:
+        next_one_instruction.append('symbol_345678')
+    for i in range(len(configurations)):
+        current_configuration = configurations[i]
+        strand_type = '({},{})_full' if i != next_index else '({},{})_final'
+        next_one_instruction.append(strand_type.format(*current_configuration))
+    instructions.append(next_one_instruction)
+
+    if next_index == -1:
+        instructions.append(['symbol_12', 'symbol_345678'])
+    else:
+        instructions.append(['symbol_covered'])
 
 
 def exit_loop():
