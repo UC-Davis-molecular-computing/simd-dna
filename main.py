@@ -916,7 +916,7 @@ def convert_tm_to_simd():
                             break
                         else:
                             for item in key:
-                                add_simd_transition(state, item, transition[key], transition_data)
+                                add_simd_transition(state, item, copy.deepcopy(transition[key]), transition_data)
                     else:
                         if key not in ['0', '1', blank]:
                             state_table_contains_unsupported_character = True
