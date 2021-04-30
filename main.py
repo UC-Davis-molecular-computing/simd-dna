@@ -1347,6 +1347,31 @@ def create_left_instruction(index, num_configurations, configuration, transition
         if (next_state, tm_data['blank']) in configurations else -1
 
     # Replace current cell coverings
+    replacement_instructions = []
+    for i in range(0, index):
+        replacement_instructions.append('({},{})_full'.format(*configurations[i]))
+    generate_right_cascade_instruction_strands(index, num_configurations, configurations, replacement_instructions)
+    instructions.append(replacement_instructions)
+
+    right_strip_instructions = []
+    for i in range(index, num_configurations):
+        current_configuration = configurations[i]
+        right_strip_instructions.append('({},{})_right_strip'.format(*current_configuration))
+    right_strip_instructions.append('symbol_right_strip')
+    instructions.append(right_strip_instructions)
+
+    last_one_instructions = []
+    for i in range(index, num_configurations):
+        current_configuration = configurations[i]
+        last_one_instructions.append('({},{})_full'.format(*current_configuration))
+    if write_symbol == tm_data['blank']:
+        last_one_instructions.extend(['symbol_123', 'symbol_456', 'symbol_78'])
+    elif write_symbol == '0':
+        last_one_instructions.extend(['symbol_123', 'symbol_45', 'symbol_678'])
+    else:
+        last_one_instructions.extend(['symbol_12', 'symbol_345678'])
+
+    instructions.append(last_one_instructions)
 
 
 def create_right_instruction(index, num_configurations, configuration, transition, transition_data, tm_data):
@@ -1368,32 +1393,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     strand_types[start_strand_strip_name] = Strand(start_domains, True, color)
     right_instruction.append(start_strand_name)
 
-    for i in range(index + 1, num_configurations):
-        previous_configuration = configurations[i - 1]
-        current_configuration = configurations[i]
-        right_strand_name = '({},{})_right'.format(*current_configuration)
-        if right_strand_name not in strand_types.keys():
-            right_strand_domains = ['({},{})-{}'.format(*previous_configuration, 3)]
-            for j in range(1, 3):
-                right_strand_domains.append('({},{})-{}'.format(*current_configuration, j))
-            right_strand_domains.append('11')
-            color = strand_types['({},{})_full'.format(*current_configuration)].color
-            strand_types[right_strand_name] = Strand(right_strand_domains, False, color)
-            right_strip_name = '({},{})_right_strip'.format(*current_configuration)
-            strand_types[right_strip_name] = Strand(right_strand_domains, True, color)
-        right_instruction.append(right_strand_name)
-
-    if 'symbol_right' not in strand_types.keys():
-        last_configuration = configurations[num_configurations - 1]
-        right_strand_domains = ['({},{})-{}'.format(*last_configuration, 3)]
-        for i in range(1, 8):
-            right_strand_domains.append(str(i))
-        right_strand_domains.append('11')
-        color = strand_types['symbol_covered'.format(*current_configuration)].color
-        strand_types['symbol_right'] = Strand(right_strand_domains, False, color)
-        strand_types['symbol_right_strip'] = Strand(right_strand_domains, True, color)
-
-    right_instruction.append('symbol_right')
+    generate_right_cascade_instruction_strands(index + 1, num_configurations, configurations, right_instruction)
     instructions.append(right_instruction)
 
     # Strip out strands from previous instruction
@@ -1546,6 +1546,38 @@ def create_right_instruction(index, num_configurations, configuration, transitio
         instructions.append(['symbol_12', 'symbol_345678'])
     else:
         instructions.append(['symbol_covered'])
+
+
+def generate_right_cascade_instruction_strands(index, num_configurations, configurations, instruction_list):
+    for i in range(index, num_configurations):
+        previous_configuration = configurations[i - 1] if i > 0 else -1
+        current_configuration = configurations[i]
+        right_strand_name = '({},{})_right'.format(*current_configuration)
+        if right_strand_name not in strand_types.keys():
+            if previous_configuration == -1:
+                right_strand_domains = ['8']
+            else:
+                right_strand_domains = ['({},{})-{}'.format(*previous_configuration, 3)]
+            for j in range(1, 3):
+                right_strand_domains.append('({},{})-{}'.format(*current_configuration, j))
+            right_strand_domains.append('11')
+            color = strand_types['({},{})_full'.format(*current_configuration)].color
+            strand_types[right_strand_name] = Strand(right_strand_domains, False, color)
+            right_strip_name = '({},{})_right_strip'.format(*current_configuration)
+            strand_types[right_strip_name] = Strand(right_strand_domains, True, color)
+        instruction_list.append(right_strand_name)
+
+    if 'symbol_right' not in strand_types.keys():
+        last_configuration = configurations[num_configurations - 1]
+        right_strand_domains = ['({},{})-{}'.format(*last_configuration, 3)]
+        for i in range(1, 8):
+            right_strand_domains.append(str(i))
+        right_strand_domains.append('11')
+        color = strand_types['symbol_covered'].color
+        strand_types['symbol_right'] = Strand(right_strand_domains, False, color)
+        strand_types['symbol_right_strip'] = Strand(right_strand_domains, True, color)
+
+    instruction_list.append('symbol_right')
 
 
 def exit_loop():
