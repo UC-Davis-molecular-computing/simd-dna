@@ -380,7 +380,7 @@ class Register:
         domains_2 = strand_types[strand_2['strand_name']].domains
         diff = start_2 - start_1
         for i in range(diff, len(domains_1)):
-            if domains_1[i] == domains_2[i-diff]:
+            if domains_1[i] == domains_2[i - diff]:
                 return True
 
         return False
@@ -417,10 +417,11 @@ class Register:
         for cell in self.cells:
             cell_type = cell_types[cell]
             num_domains = len(cell_type.domains)
-            self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
-                                         (str(self._svg_left_offset + domains) + "mm",
-                                          str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
-                                         stroke=svgwrite.rgb(0, 0, 0)))
+            self._dwg.add(
+                self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                               (str(self._svg_left_offset + domains) + "mm",
+                                str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
+                               stroke=svgwrite.rgb(0, 0, 0)))
 
             for i in range(1, num_domains):
                 self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains + i * self._svg_domain_length) + "mm",
@@ -431,10 +432,11 @@ class Register:
 
             domains += num_domains * self._svg_domain_length
 
-        self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
-                                     (str(self._svg_left_offset + domains) + "mm",
-                                      str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
-                                     stroke=svgwrite.rgb(0, 0, 0)))
+        self._dwg.add(
+            self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                           (str(self._svg_left_offset + domains) + "mm",
+                            str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
+                           stroke=svgwrite.rgb(0, 0, 0)))
 
     def svg_draw_strands(self, strand_set, layer):
         if strand_set is None:
@@ -605,15 +607,15 @@ class Register:
                 label = labels[i]
                 for strand in label['strands']:
                     if previous_domains + strand[0] < 0:
-                        continue # todo: handle negative indices
+                        continue  # todo: handle negative indices
 
-                    domain_coverings, orthogonal_coverings\
+                    domain_coverings, orthogonal_coverings \
                         = self.get_coverings_at_domain_index(previous_domains + strand[0], True)
                     domain_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
                                                    domain_coverings))
                     domain_coverings = [d['strand_name'] for d in domain_coverings]
                     orthogonal_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
-                                                orthogonal_coverings))
+                                                       orthogonal_coverings))
                     orthogonal_coverings = [d['strand_name'] for d in orthogonal_coverings]
                     if strand[1] not in domain_coverings and strand[1] not in orthogonal_coverings:
                         is_match[i] = False
@@ -772,11 +774,11 @@ all separated by commas: ').split(',')
         strands = label['strands']
         index = int(data[i])
         if len(strands) == 0:
-            strands.append([index, data[i+1]])
+            strands.append([index, data[i + 1]])
         else:
             for j in range(len(strands)):
                 if strands[j][0] > index:
-                    strands.insert(j, [index, data[i+1]])
+                    strands.insert(j, [index, data[i + 1]])
                     break
 
                 if j == len(strands) - 1:
@@ -910,6 +912,11 @@ def convert_tm_to_simd():
             transition = table[state]
             if transition is not None:
                 for key in transition.keys():
+                    if 'write' in transition[key].keys() \
+                            and str(transition[key]['write']) not in ['0', '1', blank]:
+                        state_table_contains_unsupported_character = True
+                        break
+
                     if type(key) is tuple:
                         if contains_outside_list(key, ['0', '1', blank]):
                             state_table_contains_unsupported_character = True
@@ -1048,7 +1055,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     label_template['strands'].append([current_index, 'symbol_covered'])
     for i in range(len(transition_data)):
         label_string = '({},{})'.format(*list(transition_data.keys())[i])
-        
+
         open_label = copy.deepcopy(label_template)
         open_label['strands'][i][0] += 1
         open_label['strands'][i][1] = open_label['strands'][i][1].replace('full', 'open')
@@ -1083,7 +1090,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
                 })
             else:
                 registers[register_name].coverings.append({
-                    'start_index': current_index ,
+                    'start_index': current_index,
                     'strand_name': '({},{})_full'.format(*configuration)
                 })
 
@@ -1459,7 +1466,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(next_right_instructions)
 
     # Add instructions for when right cell is blank
-    next_index = configurations.index((next_state, tm_data['blank']))\
+    next_index = configurations.index((next_state, tm_data['blank'])) \
         if (next_state, tm_data['blank']) in configurations else -1
     first_configuration = configurations[0]
     if 'right_blank' not in strand_types.keys():
@@ -1630,7 +1637,7 @@ def simd_simulator(args):
                        '''9 - ''' + (
                            'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
                        '''10 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
-                                     else 'Show unused instruction strands\n') +
+                                      else 'Show unused instruction strands\n') +
                        '''11 - Convert turingmachine.io Turing machine to SIMD register
 12 - Exit
 
