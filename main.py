@@ -1370,7 +1370,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
 
     # Add instructions for when right cell is zero
     next_index = configurations.index((next_state, '0')) \
-        if (next_state, tm_data['blank']) in configurations else -1
+        if (next_state, '0') in configurations else -1
     instructions.append(['next_right_2_strip'])
     if next_index == -1:
         instructions.append(['symbol_123', 'symbol_45'])
@@ -1396,7 +1396,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
 
     # Add instructions for when right cell is one
     next_index = configurations.index((next_state, '1')) \
-        if (next_state, tm_data['blank']) in configurations else -1
+        if (next_state, '1') in configurations else -1
     one_instructions = []
     for current_configuration in configurations:
         one_instructions.append('({},{})_next_right_strip'.format(*current_configuration))
