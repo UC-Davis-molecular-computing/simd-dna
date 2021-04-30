@@ -1233,7 +1233,9 @@ def create_left_instruction(index, num_configurations, configuration, transition
     left_instruction = ['left_start']
     if 'left_start' not in strand_types.keys():
         first_domain = '({},{})-1'.format(*configurations[0])
-        strand_types['left_start'] = Strand(['7', '8', first_domain, '11'], False)
+        domains = ['7', '8', first_domain, '11']
+        strand_types['left_start'] = Strand(domains, False)
+        strand_types['left_start_strip'] = Strand(domains, True)
     for i in range(0, index):
         current_configuration = configurations[i]
         next_configuration = configurations[i + 1]
@@ -1274,22 +1276,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
         instructions.append(['symbol_45', 'symbol_678'])
     else:
         zero_instruction = []
-        for i in range(next_index, num_configurations):
-            current_configuration = configurations[i]
-            next_configuration = configurations[i + 1] if i < num_configurations - 1 else -1
-            left_strand_name = '({},{})_left'.format(*current_configuration)
-            if left_strand_name not in strand_types.keys():
-                left_strand_domains = []
-                for j in range(2, 4):
-                    left_strand_domains.append('({},{})-{}'.format(*current_configuration, j))
-                if next_configuration == -1:
-                    left_strand_domains.append('1')
-                else:
-                    left_strand_domains.append('({},{})-{}'.format(*next_configuration, 1))
-                left_strand_domains.append('11')
-                color = strand_types['({},{})_full'.format(*current_configuration)].color
-                strand_types[left_strand_name] = Strand(left_strand_domains, False, color)
-            zero_instruction.append(left_strand_name)
+        generate_left_cascade_instruction_strands(next_index, num_configurations, configurations, zero_instruction)
         if 'zero_symbol_displace' not in strand_types.keys():
             domains = ['2', '3', '4', '5', '6', '12']
             color = strand_types['symbol_45'].color
@@ -1297,12 +1284,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
         zero_instruction.append('zero_symbol_displace')
         instructions.append(zero_instruction)
         instructions.append(['one_left_start'])  # in case left cell is 1
-
-        new_cell_instructions = ['({},{})_final'.format(*configurations[next_index])]
-        for i in range(next_index + 1, num_configurations):
-            new_cell_instructions.append('({},{})_full'.format(*configurations[i]))
-        new_cell_instructions.append('symbol_covered')
-        instructions.append(new_cell_instructions)
+        generate_left_final_instruction_strands(next_index, num_configurations, configurations)
 
     # Add instructions for when left cell is one
     next_index = configurations.index((next_state, '1')) \
@@ -1320,38 +1302,28 @@ def create_left_instruction(index, num_configurations, configuration, transition
         instructions.append(['temp_one'])
 
         one_instruction = []
-        for i in range(next_index, num_configurations):
-            current_configuration = configurations[i]
-            next_configuration = configurations[i + 1] if i < num_configurations - 1 else -1
-            left_strand_name = '({},{})_left'.format(*current_configuration)
-            if left_strand_name not in strand_types.keys():
-                left_strand_domains = []
-                for j in range(2, 4):
-                    left_strand_domains.append('({},{})-{}'.format(*current_configuration, j))
-                if next_configuration == -1:
-                    left_strand_domains.append('1')
-                else:
-                    left_strand_domains.append('({},{})-{}'.format(*next_configuration, 1))
-                left_strand_domains.append('11')
-                color = strand_types['({},{})_full'.format(*current_configuration)].color
-                strand_types[left_strand_name] = Strand(left_strand_domains, False, color)
-            one_instruction.append(left_strand_name)
+        generate_left_cascade_instruction_strands(next_index, num_configurations, configurations, one_instruction)
         if 'one_symbol_displace' not in strand_types.keys():
             domains = ['2', '3', '12']
             color = strand_types['symbol_12'].color
             strand_types['one_symbol_displace'] = Strand(domains, False, color)
         one_instruction.append('one_symbol_displace')
         instructions.append(one_instruction)
-
-        new_cell_instructions = ['({},{})_final'.format(*configurations[next_index])]
-        for i in range(next_index + 1, num_configurations):
-            new_cell_instructions.append('({},{})_full'.format(*configurations[i]))
-        new_cell_instructions.append('symbol_covered')
-        instructions.append(new_cell_instructions)
+        generate_left_final_instruction_strands(next_index, num_configurations, configurations)
 
     # Add instructions for when left cell is blank
     next_index = configurations.index((next_state, tm_data['blank'])) \
         if (next_state, tm_data['blank']) in configurations else -1
+    instructions.append(['left_start_strip'])
+    if next_index == -1:
+        instructions.append(['symbol_78'])
+    else:
+        instructions.append(['symbol_right'])
+        instructions.append(['symbol_right_strip'])
+        blank_instruction = []
+        generate_left_cascade_instruction_strands(next_index, num_configurations, configurations, blank_instruction)
+        instructions.append(blank_instruction)
+        generate_left_final_instruction_strands(next_index, num_configurations, configurations)
 
     # Replace current cell coverings
     replacement_instructions = []
@@ -1379,6 +1351,34 @@ def create_left_instruction(index, num_configurations, configuration, transition
         last_one_instructions.extend(['symbol_12', 'symbol_345678'])
 
     instructions.append(last_one_instructions)
+
+
+def generate_left_cascade_instruction_strands(next_index, num_configurations, configurations, instruction_list):
+    for i in range(next_index, num_configurations):
+        current_configuration = configurations[i]
+        next_configuration = configurations[i + 1] if i < num_configurations - 1 else -1
+        left_strand_name = '({},{})_left'.format(*current_configuration)
+        if left_strand_name not in strand_types.keys():
+            left_strand_domains = []
+            for j in range(2, 4):
+                left_strand_domains.append('({},{})-{}'.format(*current_configuration, j))
+            if next_configuration == -1:
+                left_strand_domains.append('1')
+            else:
+                left_strand_domains.append('({},{})-{}'.format(*next_configuration, 1))
+            left_strand_domains.append('11')
+            color = strand_types['({},{})_full'.format(*current_configuration)].color
+            strand_types[left_strand_name] = Strand(left_strand_domains, False, color)
+        instruction_list.append(left_strand_name)
+
+
+def generate_left_final_instruction_strands(next_index, num_configurations, configurations):
+    global instructions
+    new_cell_instructions = ['({},{})_final'.format(*configurations[next_index])]
+    for i in range(next_index + 1, num_configurations):
+        new_cell_instructions.append('({},{})_full'.format(*configurations[i]))
+    new_cell_instructions.append('symbol_covered')
+    instructions.append(new_cell_instructions)
 
 
 def create_right_instruction(index, num_configurations, configuration, transition, transition_data, tm_data):
