@@ -1419,9 +1419,11 @@ def create_right_instruction(index, num_configurations, configuration, transitio
 
     if write_symbol == tm_data['blank']:
         replacement_instructions.append('symbol_123')
-        if 'symbol_4567' not in strand_types.keys():
-            strand_types['symbol_4567'] = Strand(['4', '5', '6', '7'], False, strand_types['symbol_456'].color)
-        replacement_instructions.append('symbol_4567')
+        if 'symbol_4567(13)' not in strand_types.keys():
+            domains = ['4', '5', '6', '7', '13']
+            strand_types['symbol_4567(13)'] = Strand(domains, False, strand_types['symbol_456'].color)
+            strand_types['symbol_4567(13)_strip'] = Strand(domains, True, strand_types['symbol_456'].color)
+        replacement_instructions.append('symbol_4567(13)')
     elif write_symbol == '0':
         replacement_instructions.append('symbol_123')
         replacement_instructions.append('symbol_45')
@@ -1493,7 +1495,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(['8_right_plug_strip'])
     last_blank_instruction = []
     if write_symbol == tm_data['blank']:
-        last_blank_instruction.append('symbol_78')
+        last_blank_instruction.append('symbol_4567(13)_strip')
     elif write_symbol == '0':
         last_blank_instruction.append('symbol_678')
     else:
@@ -1501,6 +1503,9 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     strand_type = '({},{})_final' if next_index == 0 else '({},{})_full'
     last_blank_instruction.append(strand_type.format(*first_configuration))
     instructions.append(last_blank_instruction)
+
+    if write_symbol == tm_data['blank']:  # special case
+        instructions.append(['symbol_456', 'symbol_78'])
 
     # Add instructions for when right cell is zero
     next_index = configurations.index((next_state, '0')) \
@@ -1519,7 +1524,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(['8_right_plug_strip'])
     last_zero_instruction = []
     if write_symbol == tm_data['blank']:
-        last_zero_instruction.append('symbol_78')
+        last_zero_instruction.append('symbol_4567(13)_strip')
     elif write_symbol == '0':
         last_zero_instruction.append('symbol_678')
     else:
@@ -1527,6 +1532,9 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     strand_type = '({},{})_final' if next_index == 0 else '({},{})_full'
     last_zero_instruction.append(strand_type.format(*first_configuration))
     instructions.append(last_zero_instruction)
+
+    if write_symbol == tm_data['blank']:  # special case
+        instructions.append(['symbol_456', 'symbol_78'])
 
     # Add instructions for when right cell is one
     next_index = configurations.index((next_state, '1')) \
@@ -1538,7 +1546,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(one_instructions)
     next_one_instruction = []
     if write_symbol == tm_data['blank']:
-        next_one_instruction.append('symbol_78')
+        next_one_instruction.append('symbol_4567(13)_strip')
     elif write_symbol == '0':
         next_one_instruction.append('symbol_678')
     else:
@@ -1548,6 +1556,9 @@ def create_right_instruction(index, num_configurations, configuration, transitio
         strand_type = '({},{})_full' if i != next_index else '({},{})_final'
         next_one_instruction.append(strand_type.format(*current_configuration))
     instructions.append(next_one_instruction)
+
+    if write_symbol == tm_data['blank']:  # special case
+        instructions.append(['symbol_456', 'symbol_78'])
 
     if next_index == -1:
         instructions.append(['symbol_12', 'symbol_345678'])
