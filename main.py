@@ -705,6 +705,13 @@ def convert_hex_to_rgb(hex_rgb):
     return 'rgb(%d, %d, %d)' % (red, green, blue)
 
 
+def convert_rgb_to_hex(r, g, b):
+    red = int(r * 255)
+    green = int(g * 255)
+    blue = int(b * 255)
+    return '#{:02x}{:02x}{:02x}'.format(red, green, blue)
+
+
 def add_cell_type():
     name = input('Enter cell type name: ')
     domains = input('Enter domain names, separated by commas: ').split(',')
@@ -975,28 +982,38 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     cell_types['Tape cell'] = tape_cell
 
     # Add basic strand types
+    import seaborn as sns
+    palette = sns.color_palette(None, len(transition_data) + 3)
+    palette = [convert_rgb_to_hex(*x) for x in palette]
+
     strand_name_template = '({},{})_{}'
     strand_data = Strand([], False)
-    for key in transition_data.keys():
+    for key, color in zip(transition_data.keys(), palette[:-3]):
         full_key = strand_name_template.format(*key, 'full')
         strand_types[full_key] = copy.deepcopy(strand_data)
         for i in range(1, 4):
             strand_types[full_key].domains.append(domain_template.format(*key, i))
+            strand_types[full_key].color = color
 
         open_key = strand_name_template.format(*key, 'open')
         strand_types[open_key] = copy.deepcopy(strand_data)
         for i in range(2, 4):
             strand_types[open_key].domains.append(domain_template.format(*key, i))
+            strand_types[open_key].color = color
 
     # Strand patterns
     # Blank - 123,456,78
     # Zero - 123,45,678
     # One - 12,345678
 
+    blank_color = palette[-3]
+    zero_color = palette[-2]
+    one_color = palette[-1]
     strand_types['symbol_covered'] = copy.deepcopy(strand_data)
     for i in range(1, 9):
         strand_types['symbol_covered'].domains.append(str(i))
 
+    strand_data.color = one_color
     strand_types['symbol_12'] = copy.deepcopy(strand_data)
     for i in range(1, 3):
         strand_types['symbol_12'].domains.append(str(i))
@@ -1005,6 +1022,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     for i in range(3, 9):
         strand_types['symbol_345678'].domains.append(str(i))
 
+    strand_data.color = zero_color
     strand_types['symbol_123'] = copy.deepcopy(strand_data)
     for i in range(1, 4):
         strand_types['symbol_123'].domains.append(str(i))
@@ -1017,6 +1035,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     for i in range(6, 9):
         strand_types['symbol_678'].domains.append(str(i))
 
+    strand_data.color = blank_color
     strand_types['symbol_456'] = copy.deepcopy(strand_data)
     for i in range(4, 7):
         strand_types['symbol_456'].domains.append(str(i))
