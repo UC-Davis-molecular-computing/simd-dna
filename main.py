@@ -983,7 +983,14 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
 
     cell_types['Tape cell'] = tape_cell
 
-    # Add basic strand types
+    create_basic_strand_types(transition_data, domain_template)
+    create_cell_labels(transition_data, tm_data['blank'])
+    encode_register_data(register_name, transition_data, tm_data)
+    generate_tm_instructions(transition_data, tm_data['blank'])
+
+
+def create_basic_strand_types(transition_data, domain_template):
+    global strand_types
     import seaborn as sns
     palette = sns.color_palette(None, len(transition_data) + 3)
     palette = [convert_rgb_to_hex(*x) for x in palette]
@@ -1046,7 +1053,9 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
     for i in range(7, 9):
         strand_types['symbol_78'].domains.append(str(i))
 
-    # Add cell labels
+
+def create_cell_labels(transition_data, blank_symbol):
+    global cell_types
     label_template = {'strands': [], 'label': ''}
     current_index = 0
     for configuration in transition_data.keys():
@@ -1054,7 +1063,7 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
         current_index += 3
 
     blank_label = copy.deepcopy(label_template)
-    blank_label['label'] = tm_data['blank'] if tm_data['blank'] != ' ' else '␣'
+    blank_label['label'] = blank_symbol if blank_symbol != ' ' else '␣'
     blank_label['strands'].append([current_index, 'symbol_123'])
     blank_label['strands'].append([current_index + 3, 'symbol_456'])
     blank_label['strands'].append([current_index + 6, 'symbol_78'])
@@ -1094,7 +1103,9 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
         final_label['label'] = label_string
         cell_types['Tape cell'].strand_labels.append(final_label)
 
-    # Encode register data
+
+def encode_register_data(register_name, transition_data, tm_data):
+    global registers
     registers[register_name] = Register()
     if len(tm_data['input']) > 0:
         registers[register_name].add_cell('Tape cell')
@@ -1145,8 +1156,6 @@ def generate_tm_to_simd_data_from_transitions(transition_data, tm_data, register
                 insert_one_symbol(registers[register_name].coverings, current_index)
             current_index += 8
 
-    generate_tm_instructions(transition_data, tm_data)
-
 
 def insert_blank_symbol(coverings, current_index):
     coverings.append({
@@ -1194,7 +1203,7 @@ def insert_one_symbol(coverings, current_index):
     })
 
 
-def generate_tm_instructions(transition_data, tm_data):
+def generate_tm_instructions(transition_data, blank_symbol):
     global strand_types, instructions
     configurations = list(transition_data.keys())
     for configuration in configurations:
@@ -1233,9 +1242,9 @@ def generate_tm_instructions(transition_data, tm_data):
 
         transition = transition_data[configuration]
         if 'L' in transition.keys():
-            create_left_instruction(i, num_configurations, configuration, transition, transition_data, tm_data)
+            create_left_instruction(i, num_configurations, configuration, transition, transition_data, blank_symbol)
         else:
-            create_right_instruction(i, num_configurations, configuration, transition, transition_data, tm_data)
+            create_right_instruction(i, num_configurations, configuration, transition, transition_data, blank_symbol)
 
     # Restart instruction
     instructions.append(['({},{})_restart'.format(*c) for c in configurations])
@@ -1244,7 +1253,7 @@ def generate_tm_instructions(transition_data, tm_data):
     instructions.append(['({},{})_open'.format(*c) for c in configurations])
 
 
-def create_left_instruction(index, num_configurations, configuration, transition, transition_data, tm_data):
+def create_left_instruction(index, num_configurations, configuration, transition, transition_data, blank_symbol):
     global strand_types, instructions
     next_state = transition['L']
     write_symbol = transition['write']
@@ -1333,8 +1342,8 @@ def create_left_instruction(index, num_configurations, configuration, transition
         generate_left_final_instruction_strands(next_index, num_configurations, configurations)
 
     # Add instructions for when left cell is blank
-    next_index = configurations.index((next_state, tm_data['blank'])) \
-        if (next_state, tm_data['blank']) in configurations else -1
+    next_index = configurations.index((next_state, blank_symbol)) \
+        if (next_state, blank_symbol) in configurations else -1
     instructions.append(['left_start_strip'])
     if next_index == -1:
         instructions.append(['symbol_78'])
@@ -1364,7 +1373,7 @@ def create_left_instruction(index, num_configurations, configuration, transition
     for i in range(index, num_configurations):
         current_configuration = configurations[i]
         last_one_instructions.append('({},{})_full'.format(*current_configuration))
-    if write_symbol == tm_data['blank']:
+    if write_symbol == blank_symbol:
         last_one_instructions.extend(['symbol_123', 'symbol_456', 'symbol_78'])
     elif write_symbol == '0':
         last_one_instructions.extend(['symbol_123', 'symbol_45', 'symbol_678'])
@@ -1402,7 +1411,7 @@ def generate_left_final_instruction_strands(next_index, num_configurations, conf
     instructions.append(new_cell_instructions)
 
 
-def create_right_instruction(index, num_configurations, configuration, transition, transition_data, tm_data):
+def create_right_instruction(index, num_configurations, configuration, transition, transition_data, blank_symbol):
     global strand_types, instructions
     next_state = transition['R']
     write_symbol = transition['write']
@@ -1438,7 +1447,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     for current_configuration in configurations:
         replacement_instructions.append('({},{})_full'.format(*current_configuration))
 
-    if write_symbol == tm_data['blank']:
+    if write_symbol == blank_symbol:
         replacement_instructions.append('symbol_123')
         if 'symbol_45(13)' not in strand_types.keys():
             domains = ['4', '5', '13']
@@ -1492,8 +1501,8 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(next_right_instructions)
 
     # Add instructions for when right cell is blank
-    next_index = configurations.index((next_state, tm_data['blank'])) \
-        if (next_state, tm_data['blank']) in configurations else -1
+    next_index = configurations.index((next_state, blank_symbol)) \
+        if (next_state, blank_symbol) in configurations else -1
     first_configuration = configurations[0]
     if 'right_blank' not in strand_types.keys():
         domains = ['4', '5', '6', '12']
@@ -1518,7 +1527,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(['symbol_456' if next_index == -1 else 'symbol_covered'])
     instructions.append(['8_right_plug_strip'])
     last_blank_instruction = []
-    if write_symbol == tm_data['blank']:
+    if write_symbol == blank_symbol:
         last_blank_instruction.extend(['symbol_456', 'symbol_78'])
     elif write_symbol == '0':
         last_blank_instruction.append('symbol_678')
@@ -1544,7 +1553,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     instructions.append(zero_instructions)
     instructions.append(['8_right_plug_strip'])
     last_zero_instruction = []
-    if write_symbol == tm_data['blank']:
+    if write_symbol == blank_symbol:
         last_zero_instruction.extend(['symbol_456', 'symbol_78'])
     elif write_symbol == '0':
         last_zero_instruction.append('symbol_678')
@@ -1563,7 +1572,7 @@ def create_right_instruction(index, num_configurations, configuration, transitio
     one_instructions.append('next_right_1_strip')
     instructions.append(one_instructions)
     next_one_instruction = []
-    if write_symbol == tm_data['blank']:
+    if write_symbol == blank_symbol:
         next_one_instruction.extend(['symbol_456', 'symbol_78'])
     elif write_symbol == '0':
         next_one_instruction.append('symbol_678')
