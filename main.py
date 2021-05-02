@@ -406,7 +406,7 @@ class Register:
             self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_left_offset / 2)) + "mm"],
                                          y=[str(float((self._svg_vertical_offset - self._svg_cell_height / 2))) + "mm"],
                                          fill=svgwrite.rgb(0, 0, 0),
-                                         style="text-anchor:middle;dominant-baseline:middle"))
+                                         style="text-anchor:middle;dominant-baseline:middle;font-size:20"))
 
         self._dwg.add(self._dwg.line((str(self._svg_left_offset) + "mm", str(self._svg_vertical_offset) + "mm"),
                                      (str(self._svg_left_offset + self._total_domains * self._svg_domain_length) + "mm",
@@ -631,7 +631,7 @@ class Register:
                                              y=[str(float((self._svg_vertical_offset +
                                                            self._svg_cell_label_height_offset))) + "mm"],
                                              fill=svgwrite.rgb(0, 0, 0),
-                                             style="text-anchor:middle;dominant-baseline:middle"))
+                                             style="text-anchor:middle;dominant-baseline:middle;font-size:22"))
 
             previous_domains += len(cell.domains)
 
