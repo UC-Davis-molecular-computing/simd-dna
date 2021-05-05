@@ -1084,7 +1084,10 @@ def create_cell_labels(transition_data, blank_symbol):
 
     label_template['strands'].append([current_index, 'symbol_covered'])
     for i in range(len(transition_data)):
-        label_string = '({},{})'.format(*list(transition_data.keys())[i])
+        data = list(transition_data.keys())[i]
+        if data[1] == ' ':
+            data = (data[0], '␣')
+        label_string = '({},{})'.format(*data)
 
         open_label = copy.deepcopy(label_template)
         open_label['strands'][i][0] += 1
