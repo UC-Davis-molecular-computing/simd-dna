@@ -406,7 +406,8 @@ class Register:
             self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_left_offset / 2)) + "mm"],
                                          y=[str(float((self._svg_vertical_offset - self._svg_cell_height / 2))) + "mm"],
                                          fill=svgwrite.rgb(0, 0, 0),
-                                         style="text-anchor:middle;dominant-baseline:middle;font-size:20"))
+                                         style="text-anchor:middle;dominant-baseline:middle;font-size:20;"
+                                               "font-family:sans-serif"))
 
         self._dwg.add(self._dwg.line((str(self._svg_left_offset) + "mm", str(self._svg_vertical_offset) + "mm"),
                                      (str(self._svg_left_offset + self._total_domains * self._svg_domain_length) + "mm",
@@ -631,7 +632,8 @@ class Register:
                                              y=[str(float((self._svg_vertical_offset +
                                                            self._svg_cell_label_height_offset))) + "mm"],
                                              fill=svgwrite.rgb(0, 0, 0),
-                                             style="text-anchor:middle;dominant-baseline:middle;font-size:22"))
+                                             style="text-anchor:middle;dominant-baseline:middle;font-size:22;"
+                                                   "font-family:sans-serif"))
 
             previous_domains += len(cell.domains)
 
@@ -1063,7 +1065,7 @@ def create_cell_labels(transition_data, blank_symbol):
         current_index += 3
 
     blank_label = copy.deepcopy(label_template)
-    blank_label['label'] = blank_symbol if blank_symbol != ' ' else '␣'
+    blank_label['label'] = blank_symbol if blank_symbol != ' ' else '⎵'
     blank_label['strands'].append([current_index, 'symbol_123'])
     blank_label['strands'].append([current_index + 3, 'symbol_456'])
     blank_label['strands'].append([current_index + 6, 'symbol_78'])
@@ -1086,7 +1088,7 @@ def create_cell_labels(transition_data, blank_symbol):
     for i in range(len(transition_data)):
         data = list(transition_data.keys())[i]
         if data[1] == ' ':
-            data = (data[0], '␣')
+            data = (data[0], '⎵')
         label_string = '({},{})'.format(*data)
 
         open_label = copy.deepcopy(label_template)
