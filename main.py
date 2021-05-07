@@ -391,7 +391,7 @@ class Register:
             self._svg_vertical_offset = 55
             width = str(10 + (self._total_domains + 10) * self._svg_domain_length) + "mm"
             height = "100%" if num_instructions is None \
-                else str(5 + (num_instructions + 1) * self._svg_vertical_offset) + "mm"
+                else str(25 + self._svg_vertical_offset + (num_instructions * 50)) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
         self._svg_draw_register_outline(label)
