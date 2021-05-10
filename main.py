@@ -445,6 +445,7 @@ class Register:
 
         upper_y = str(self._svg_vertical_offset - (layer + 1) * self._svg_domain_length) + "mm"
         y = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
+        diagonal_strand_offset = 0.1323
         previous_domains = 0
         current_start = None
         current_strand = None
@@ -481,31 +482,37 @@ class Register:
                         current_start = None
                         current_strand = None
 
+                    y_offset = str((float(y[:-2]) + diagonal_strand_offset)) + "mm"
+                    upper_y_offset = str((float(upper_y[:-2]) + diagonal_strand_offset)) + "mm"
                     if point_right:
-                        right_minus = str(float(right[:-2]) - 0.5 + self._svg_domain_length) + "mm"
-                        previous_right_minus = str(float(right[:-2]) - 0.5) + "mm"
+                        right_minus = str(float(right[:-2]) - 0.5 + self._svg_domain_length
+                                          + diagonal_strand_offset) + "mm"
+                        previous_right_minus = str(float(right[:-2]) - 0.5 + diagonal_strand_offset) + "mm"
                         if strand_types[orthogonal_strand['strand_name']].is_complementary:
-                            self._dwg.add(self._dwg.line((previous_right_minus, y), (right_minus, upper_y),
+                            self._dwg.add(self._dwg.line((previous_right_minus, y_offset), (right_minus, upper_y_offset),
                                                          stroke=orthogonal_color,
                                                          stroke_width="1mm", stroke_dasharray="4,2"))
                         else:
-                            self._svg_draw_upper_right_arrow(float(right_minus[:-2]), float(upper_y[:-2]),
+                            self._svg_draw_upper_right_arrow(float(right_minus[:-2]) + diagonal_strand_offset,
+                                                             float(upper_y[:-2]) + diagonal_strand_offset,
                                                              orthogonal_color)
-                            self._dwg.add(self._dwg.line((previous_right_minus, y), (right_minus, upper_y),
+                            self._dwg.add(self._dwg.line((previous_right_minus, y_offset), (right_minus, upper_y_offset),
                                                          stroke=orthogonal_color,
                                                          stroke_width="1mm"))
                     else:
-                        left_plus = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
-                        right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3) + "mm"
+                        left_plus = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length\
+                                    + 2 * diagonal_strand_offset
+                        right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3\
+                                     + diagonal_strand_offset) + "mm"
                         left_plus = str(left_plus) + "mm"
                         if strand_types[orthogonal_strand['strand_name']].is_complementary:
-                            self._svg_draw_upper_left_arrow(float(left_plus[:-2]), float(upper_y[:-2]),
+                            self._svg_draw_upper_left_arrow(float(left_plus[:-2]), float(upper_y_offset[:-2]),
                                                             orthogonal_color)
-                            self._dwg.add(self._dwg.line((left_plus, upper_y), (right_plus, y),
+                            self._dwg.add(self._dwg.line((left_plus, upper_y_offset), (right_plus, y_offset),
                                                          stroke=orthogonal_color,
                                                          stroke_width="1mm", stroke_dasharray="4,2"))
                         else:
-                            self._dwg.add(self._dwg.line((left_plus, upper_y), (right_plus, y),
+                            self._dwg.add(self._dwg.line((left_plus, upper_y_offset), (right_plus, y_offset),
                                                          stroke=orthogonal_color,
                                                          stroke_width="1mm"))
 
