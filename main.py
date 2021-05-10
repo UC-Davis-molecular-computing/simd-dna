@@ -1282,7 +1282,7 @@ def create_left_instruction(index, num_configurations, transition, transition_da
         next_configuration = configurations[index]
         left_extended_name = '({},{})_left_extended'.format(*current_configuration)
         if left_extended_name not in strand_types.keys():
-            left_extended_domains = left_strand_domains = ['({},{})-2'.format(*current_configuration)]
+            left_extended_domains = ['({},{})-2'.format(*current_configuration)]
             for i in range(1, 3):
                 left_extended_domains.append('({},{})-{}'.format(*next_configuration, i))
             left_extended_domains.append('11')
