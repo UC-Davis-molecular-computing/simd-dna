@@ -424,38 +424,47 @@ class Register:
 
     def _svg_draw_register_outline(self, label):
         if label is not None:
-            self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_current_size_parameters['left_offset'] / 2)) + "mm"],
-                                         y=[str(float((self._svg_vertical_offset - self._svg_current_size_parameters['cell_height'] / 2))) + "mm"],
-                                         fill=svgwrite.rgb(0, 0, 0),
-                                         style="text-anchor:middle;dominant-baseline:middle;font-size:20;"
-                                               "font-family:sans-serif"))
+            self._dwg.add(
+                self._dwg.text(label, x=[str(float(self._svg_current_size_parameters['left_offset'] / 2)) + "mm"],
+                               y=[str(float((self._svg_vertical_offset - self._svg_current_size_parameters[
+                                   'cell_height'] / 2))) + "mm"],
+                               fill=svgwrite.rgb(0, 0, 0),
+                               style="text-anchor:middle;dominant-baseline:middle;font-size:20;"
+                                     "font-family:sans-serif"))
 
-        self._dwg.add(self._dwg.line((str(self._svg_current_size_parameters['left_offset']) + "mm", str(self._svg_vertical_offset) + "mm"),
-                                     (str(self._svg_current_size_parameters['left_offset'] + self._total_domains * self._svg_domain_length) + "mm",
-                                      str(self._svg_vertical_offset) + "mm"),
-                                     stroke=svgwrite.rgb(0, 0, 0)))
+        self._dwg.add(self._dwg.line(
+            (str(self._svg_current_size_parameters['left_offset']) + "mm", str(self._svg_vertical_offset) + "mm"),
+            (str(self._svg_current_size_parameters[
+                     'left_offset'] + self._total_domains * self._svg_domain_length) + "mm",
+             str(self._svg_vertical_offset) + "mm"),
+            stroke=svgwrite.rgb(0, 0, 0)))
 
         domains = 0
         for cell in self.cells:
             cell_type = cell_types[cell]
             num_domains = len(cell_type.domains)
             self._dwg.add(
-                self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
+                                str(self._svg_vertical_offset) + "mm"),
                                (str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
-                                str(self._svg_vertical_offset - self._svg_current_size_parameters['cell_height']) + "mm"),
+                                str(self._svg_vertical_offset - self._svg_current_size_parameters[
+                                    'cell_height']) + "mm"),
                                stroke=svgwrite.rgb(0, 0, 0)))
 
             for i in range(1, num_domains):
-                self._dwg.add(self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains + i * self._svg_domain_length) + "mm",
+                self._dwg.add(self._dwg.line((str(
+                    self._svg_current_size_parameters['left_offset'] + domains + i * self._svg_domain_length) + "mm",
                                               str(self._svg_vertical_offset) + "mm"),
-                                             (str(self._svg_current_size_parameters['left_offset'] + domains + i * self._svg_domain_length) + "mm",
+                                             (str(self._svg_current_size_parameters[
+                                                      'left_offset'] + domains + i * self._svg_domain_length) + "mm",
                                               str(self._svg_vertical_offset - self._svg_domain_length) + "mm"),
                                              stroke=svgwrite.rgb(0, 0, 0)))
 
             domains += num_domains * self._svg_domain_length
 
         self._dwg.add(
-            self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+            self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
+                            str(self._svg_vertical_offset) + "mm"),
                            (str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
                             str(self._svg_vertical_offset - self._svg_current_size_parameters['cell_height']) + "mm"),
                            stroke=svgwrite.rgb(0, 0, 0)))
@@ -479,7 +488,8 @@ class Register:
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
-                left = self._svg_current_size_parameters['left_offset'] + (i + previous_domains) * self._svg_domain_length
+                left = self._svg_current_size_parameters['left_offset'] + (
+                            i + previous_domains) * self._svg_domain_length
                 short_right = str(left + 3 * self._svg_domain_length // 5) + "mm"
                 short_left = str(left + self._svg_domain_length // 3) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
@@ -487,14 +497,15 @@ class Register:
                                                                                             strand_set=strand_set)
                 strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
-                color = convert_hex_to_rgb('#000000', use_lighter_colors) if strand is None\
+                color = convert_hex_to_rgb('#000000', use_lighter_colors) if strand is None \
                     else convert_hex_to_rgb(strand.color, use_lighter_colors)
                 if len(orthogonal_coverings) >= 1 and crossover_start is None:
                     orthogonal_strand = orthogonal_coverings[0]
                     orthogonal_color = convert_hex_to_rgb(strand_types[orthogonal_strand['strand_name']].color,
                                                           use_lighter_colors)
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
-                    previous_left = self._svg_current_size_parameters['left_offset'] + (i - 1 + previous_domains) * self._svg_domain_length
+                    previous_left = self._svg_current_size_parameters['left_offset'] + (
+                                i - 1 + previous_domains) * self._svg_domain_length
                     right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
 
                     if current_start is not None and orthogonal_strand['strand_name'] == current_strand:
@@ -528,7 +539,8 @@ class Register:
                                                stroke=orthogonal_color,
                                                stroke_width="1mm"))
                     else:
-                        left_plus = self._svg_current_size_parameters['left_offset'] + (i + previous_domains) * self._svg_domain_length \
+                        left_plus = self._svg_current_size_parameters['left_offset'] + (
+                                    i + previous_domains) * self._svg_domain_length \
                                     + 2 * diagonal_strand_offset
                         right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3 \
                                          + diagonal_strand_offset) + "mm"
@@ -565,19 +577,20 @@ class Register:
                         right_diagonal_end = str(left_diagonal_end - diagonal_strand_offset) + "mm"
                         left_diagonal_end = str(left_diagonal_end) + "mm"
                         top_y = str(float(y[:-2]) + diagonal_strand_offset - (
-                                    crossover_domain_count - 0.5) * self._svg_domain_length) + "mm"
+                                crossover_domain_count - 0.5) * self._svg_domain_length) + "mm"
                         self._svg_draw_horizontal_line(strand, current_start, crossover_start, y, first_color, False)
                         self._dwg.add(self._dwg.line((right_diagonal_start, top_y), (right_diagonal_end,
-                                                     y_diagonal_offset),
+                                                                                     y_diagonal_offset),
                                                      stroke=second_color,
                                                      stroke_width="1mm"))
                         # Draw the upper right arrow after the right horizontal strand is drawn
                         delayed_draw_arrow = partial(self._svg_draw_upper_right_arrow,
                                                      float(left_diagonal_end[:-2]), float(top_y[:-2]),
                                                      first_color)
-                        self._dwg.add(self._dwg.line((left_diagonal_start, y_diagonal_offset), (left_diagonal_end, top_y),
-                                                     stroke=first_color,
-                                                     stroke_width="1mm"))
+                        self._dwg.add(
+                            self._dwg.line((left_diagonal_start, y_diagonal_offset), (left_diagonal_end, top_y),
+                                           stroke=first_color,
+                                           stroke_width="1mm"))
 
                         current_start = short_right
                         current_strand = crossover_strand
@@ -604,7 +617,8 @@ class Register:
             last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
             color = convert_hex_to_rgb(strand.color, use_lighter_colors)
-            previous_left = self._svg_current_size_parameters['left_offset'] + (previous_domains - 1) * self._svg_domain_length
+            previous_left = self._svg_current_size_parameters['left_offset'] + (
+                        previous_domains - 1) * self._svg_domain_length
             right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
             right_minus = str(float(right[:-2]) - 0.5) + "mm"
             last_index = last_covering['start_index'] + len(strand.domains)
@@ -676,7 +690,8 @@ class Register:
                 x = str(x) + "mm"
                 self._dwg.add(self._dwg.text(labels[0], x=[x],
                                              y=[str(float((self._svg_vertical_offset +
-                                                           self._svg_current_size_parameters['cell_label_height_offset']))) + "mm"],
+                                                           self._svg_current_size_parameters[
+                                                               'cell_label_height_offset']))) + "mm"],
                                              fill=svgwrite.rgb(0, 0, 0),
                                              style="text-anchor:middle;dominant-baseline:middle;font-size:22;"
                                                    "font-family:sans-serif"))
