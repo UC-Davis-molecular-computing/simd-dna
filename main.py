@@ -623,8 +623,8 @@ class Register:
             right_minus = str(float(right[:-2]) - 0.5) + "mm"
             last_index = last_covering['start_index'] + len(strand.domains)
             last_right = str(float(right_minus[:-2]) + (last_index - previous_domains) * self._svg_domain_length) + "mm"
-            upper_y = str(self._svg_vertical_offset -
-                          (layer + (last_index - previous_domains)) * self._svg_domain_length) + "mm"
+            upper_y = str(float(y[:-2]) -
+                          (last_index - previous_domains) * self._svg_domain_length) + "mm"
 
             if current_start is not None:
                 if strand.is_complementary:
