@@ -982,7 +982,7 @@ def convert_tm_to_simd():
     filename = input('Enter the YAML file name: ')
     with open(filename, 'r') as file:
         data = yaml.safe_load(file)
-        blank = data['blank']
+        blank = str(data['blank'])
 
         state_table_contains_unsupported_character = False
         transition_data = {}
@@ -1005,13 +1005,13 @@ def convert_tm_to_simd():
                             break
                         else:
                             for item in key:
-                                add_simd_transition(state, item, copy.deepcopy(transition[key]), transition_data)
+                                add_simd_transition(state, str(item), copy.deepcopy(transition[key]), transition_data)
                     else:
-                        if key not in ['0', '1', blank]:
+                        if str(key) not in ['0', '1', blank]:
                             state_table_contains_unsupported_character = True
                             break
                         else:
-                            add_simd_transition(state, key, transition[key], transition_data)
+                            add_simd_transition(state, str(key), transition[key], transition_data)
 
         if re.sub(rf'[{blank}01]', '', data['input']) != '' or state_table_contains_unsupported_character:
             print('Sorry, the TM conversion algorithm only supports the blank, 0, and 1 alphabet symbols.')
@@ -1023,7 +1023,7 @@ def convert_tm_to_simd():
 
 def contains_outside_list(items, restricted_chars):
     for item in items:
-        if item not in restricted_chars:
+        if str(item) not in restricted_chars:
             return True
 
     return False
