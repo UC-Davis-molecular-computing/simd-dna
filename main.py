@@ -6,11 +6,13 @@ import re
 import ruamel.yaml as yaml
 from json import JSONEncoder
 from functools import partial
+import colorsys
 
 program_loop = True
 step_by_step_simulation = False
 keep_results = False
 show_unused_instruction_strands = False
+compress_svg_drawings = False
 cell_types = {}
 strand_types = {}
 registers = {}
@@ -54,15 +56,29 @@ class Cell:
 
 class Register:
     _svg_domain_length = 5  # millimeters
-    _svg_left_offset = 40
-    _svg_cell_label_height_offset = 5
-    _svg_cell_height = 40
+    _svg_normal_size_parameters = {
+        'left_offset': 40,
+        'cell_label_height_offset': 5,
+        'cell_height': 40,
+        'initial_vertical_offset': 55,
+        'vertical_offset_increment': 50,
+        'layer_offset': 5
+    }
+    _svg_compressed_size_parameters = {
+        'left_offset': 10,
+        'cell_label_height_offset': 5,
+        'cell_height': 15,
+        'initial_vertical_offset': 30,
+        'vertical_offset_increment': 25,
+        'layer_offset': 3
+    }
 
     def __init__(self):
         self.cells = []
         self.coverings = []
         self._dwg = None
-        self._svg_vertical_offset = 55
+        self._svg_current_size_parameters = self._svg_normal_size_parameters
+        self._svg_vertical_offset = self._svg_current_size_parameters['initial_vertical_offset']
         self._total_domains = 0
 
     def add_cell(self, cell_name):
@@ -389,10 +405,14 @@ class Register:
     def svg_draw_contents(self, name=None, num_instructions=None, label=None):
         if self._dwg is None:
             name = name if name is not None else 'output'
-            self._svg_vertical_offset = 55
+            if compress_svg_drawings:
+                self._svg_current_size_parameters = self._svg_compressed_size_parameters
+            self._svg_vertical_offset = self._svg_current_size_parameters['initial_vertical_offset']
             width = str(10 + (self._total_domains + 10) * self._svg_domain_length) + "mm"
             height = "100%" if num_instructions is None \
-                else str(25 + self._svg_vertical_offset + (num_instructions * 50)) + "mm"
+                else str(self._svg_current_size_parameters['initial_vertical_offset']
+                         + self._svg_vertical_offset
+                         + (num_instructions * self._svg_current_size_parameters['vertical_offset_increment'])) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
         self._svg_draw_register_outline(label)
@@ -400,18 +420,18 @@ class Register:
         self._svg_draw_cell_strand_labels()
 
     def svg_increment_vertical_offset(self):
-        self._svg_vertical_offset += 50
+        self._svg_vertical_offset += self._svg_current_size_parameters['vertical_offset_increment']
 
     def _svg_draw_register_outline(self, label):
         if label is not None:
-            self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_left_offset / 2)) + "mm"],
-                                         y=[str(float((self._svg_vertical_offset - self._svg_cell_height / 2))) + "mm"],
+            self._dwg.add(self._dwg.text(label, x=[str(float(self._svg_current_size_parameters['left_offset'] / 2)) + "mm"],
+                                         y=[str(float((self._svg_vertical_offset - self._svg_current_size_parameters['cell_height'] / 2))) + "mm"],
                                          fill=svgwrite.rgb(0, 0, 0),
                                          style="text-anchor:middle;dominant-baseline:middle;font-size:20;"
                                                "font-family:sans-serif"))
 
-        self._dwg.add(self._dwg.line((str(self._svg_left_offset) + "mm", str(self._svg_vertical_offset) + "mm"),
-                                     (str(self._svg_left_offset + self._total_domains * self._svg_domain_length) + "mm",
+        self._dwg.add(self._dwg.line((str(self._svg_current_size_parameters['left_offset']) + "mm", str(self._svg_vertical_offset) + "mm"),
+                                     (str(self._svg_current_size_parameters['left_offset'] + self._total_domains * self._svg_domain_length) + "mm",
                                       str(self._svg_vertical_offset) + "mm"),
                                      stroke=svgwrite.rgb(0, 0, 0)))
 
@@ -420,32 +440,34 @@ class Register:
             cell_type = cell_types[cell]
             num_domains = len(cell_type.domains)
             self._dwg.add(
-                self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
-                               (str(self._svg_left_offset + domains) + "mm",
-                                str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
+                self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                               (str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
+                                str(self._svg_vertical_offset - self._svg_current_size_parameters['cell_height']) + "mm"),
                                stroke=svgwrite.rgb(0, 0, 0)))
 
             for i in range(1, num_domains):
-                self._dwg.add(self._dwg.line((str(self._svg_left_offset + domains + i * self._svg_domain_length) + "mm",
+                self._dwg.add(self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains + i * self._svg_domain_length) + "mm",
                                               str(self._svg_vertical_offset) + "mm"),
-                                             (str(self._svg_left_offset + domains + i * self._svg_domain_length) + "mm",
+                                             (str(self._svg_current_size_parameters['left_offset'] + domains + i * self._svg_domain_length) + "mm",
                                               str(self._svg_vertical_offset - self._svg_domain_length) + "mm"),
                                              stroke=svgwrite.rgb(0, 0, 0)))
 
             domains += num_domains * self._svg_domain_length
 
         self._dwg.add(
-            self._dwg.line((str(self._svg_left_offset + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
-                           (str(self._svg_left_offset + domains) + "mm",
-                            str(self._svg_vertical_offset - self._svg_cell_height) + "mm"),
+            self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm", str(self._svg_vertical_offset) + "mm"),
+                           (str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
+                            str(self._svg_vertical_offset - self._svg_current_size_parameters['cell_height']) + "mm"),
                            stroke=svgwrite.rgb(0, 0, 0)))
 
-    def svg_draw_strands(self, strand_set, layer):
+    def svg_draw_strands(self, strand_set, layer, use_lighter_colors=False):
         if strand_set is None:
             return
 
-        upper_y = str(self._svg_vertical_offset - (layer + 1) * self._svg_domain_length) + "mm"
-        y = str(self._svg_vertical_offset - layer * self._svg_domain_length) + "mm"
+        layer_offset = self._svg_current_size_parameters['layer_offset'] if layer != 1 else self._svg_domain_length
+        y = self._svg_vertical_offset - layer * layer_offset
+        upper_y = str(y - self._svg_domain_length) + "mm"
+        y = str(y) + "mm"
         diagonal_strand_offset = 0.1323
         y_diagonal_offset = str((float(y[:-2]) + diagonal_strand_offset)) + "mm"
         previous_domains = 0
@@ -457,7 +479,7 @@ class Register:
         for cell_name in self.cells:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
-                left = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length
+                left = self._svg_current_size_parameters['left_offset'] + (i + previous_domains) * self._svg_domain_length
                 short_right = str(left + 3 * self._svg_domain_length // 5) + "mm"
                 short_left = str(left + self._svg_domain_length // 3) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
@@ -465,12 +487,14 @@ class Register:
                                                                                             strand_set=strand_set)
                 strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
-                color = 'rgb(0, 0, 0)' if strand is None else convert_hex_to_rgb(strand.color)
+                color = convert_hex_to_rgb('#000000', use_lighter_colors) if strand is None\
+                    else convert_hex_to_rgb(strand.color, use_lighter_colors)
                 if len(orthogonal_coverings) >= 1 and crossover_start is None:
                     orthogonal_strand = orthogonal_coverings[0]
-                    orthogonal_color = strand_types[orthogonal_strand['strand_name']].color
+                    orthogonal_color = convert_hex_to_rgb(strand_types[orthogonal_strand['strand_name']].color,
+                                                          use_lighter_colors)
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
-                    previous_left = self._svg_left_offset + (i - 1 + previous_domains) * self._svg_domain_length
+                    previous_left = self._svg_current_size_parameters['left_offset'] + (i - 1 + previous_domains) * self._svg_domain_length
                     right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
 
                     if current_start is not None and orthogonal_strand['strand_name'] == current_strand:
@@ -504,7 +528,7 @@ class Register:
                                                stroke=orthogonal_color,
                                                stroke_width="1mm"))
                     else:
-                        left_plus = self._svg_left_offset + (i + previous_domains) * self._svg_domain_length \
+                        left_plus = self._svg_current_size_parameters['left_offset'] + (i + previous_domains) * self._svg_domain_length \
                                     + 2 * diagonal_strand_offset
                         right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3 \
                                          + diagonal_strand_offset) + "mm"
@@ -579,8 +603,8 @@ class Register:
         if len(strand_set) >= 1:
             last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
-            color = convert_hex_to_rgb(strand.color)
-            previous_left = self._svg_left_offset + (previous_domains - 1) * self._svg_domain_length
+            color = convert_hex_to_rgb(strand.color, use_lighter_colors)
+            previous_left = self._svg_current_size_parameters['left_offset'] + (previous_domains - 1) * self._svg_domain_length
             right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
             right_minus = str(float(right[:-2]) - 0.5) + "mm"
             last_index = last_covering['start_index'] + len(strand.domains)
@@ -648,11 +672,11 @@ class Register:
             if len(labels) > 0:
                 left = previous_domains * self._svg_domain_length
                 right = left + len(cell.domains) * self._svg_domain_length
-                x = ((left + right) / 2) + self._svg_left_offset
+                x = ((left + right) / 2) + self._svg_current_size_parameters['left_offset']
                 x = str(x) + "mm"
                 self._dwg.add(self._dwg.text(labels[0], x=[x],
                                              y=[str(float((self._svg_vertical_offset +
-                                                           self._svg_cell_label_height_offset))) + "mm"],
+                                                           self._svg_current_size_parameters['cell_label_height_offset']))) + "mm"],
                                              fill=svgwrite.rgb(0, 0, 0),
                                              style="text-anchor:middle;dominant-baseline:middle;font-size:22;"
                                                    "font-family:sans-serif"))
@@ -722,10 +746,14 @@ class Register:
         return self
 
 
-def convert_hex_to_rgb(hex_rgb):
+def convert_hex_to_rgb(hex_rgb, use_lighter_colors=False):
     red = int(hex_rgb[1:3], 16)
     green = int(hex_rgb[3:5], 16)
     blue = int(hex_rgb[5:7], 16)
+    if use_lighter_colors:
+        hue, lum, sat = colorsys.rgb_to_hls(red / 255, green / 255, blue / 255)
+        lum = 0.8
+        red, green, blue = tuple([int(color * 255) for color in colorsys.hls_to_rgb(hue, lum, sat)])
     return 'rgb(%d, %d, %d)' % (red, green, blue)
 
 
@@ -834,7 +862,8 @@ def run_simulation():
                 unattached_matches = None
 
             pre_instruction_register = copy.deepcopy(register)
-            register.svg_draw_contents(register_key, len(instructions), "Instruction " + str(inst_num + 1))
+            label = ("" if compress_svg_drawings else "Instruction ") + str(inst_num + 1)
+            register.svg_draw_contents(register_key, len(instructions), label)
             inst = instructions[inst_num]
             new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
@@ -874,7 +903,7 @@ def run_simulation():
             else:
                 pre_instruction_register.print(new_strands, unattached_matches)
                 register.svg_draw_strands(new_strands, 3)
-                register.svg_draw_strands(unattached_matches, 6)
+                register.svg_draw_strands(unattached_matches, 3 if compress_svg_drawings else 6, compress_svg_drawings)
                 print()
 
             register.svg_increment_vertical_offset()
@@ -885,7 +914,8 @@ def run_simulation():
         print("Final result")
         register.print()
         print()
-        register.svg_draw_contents(register_key, label="Final result")
+        label = "F" if compress_svg_drawings else "Final result"
+        register.svg_draw_contents(register_key, label=label)
         register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
@@ -899,6 +929,7 @@ def save_data():
     register_copies = copy.deepcopy(registers)
     for register in register_copies.values():
         del register._dwg
+        del register._current_size_parameters
         del register._svg_vertical_offset
         del register._total_domains
 
@@ -925,6 +956,11 @@ def toggle_keep_results():
 def toggle_show_unused_instruction_strands():
     global show_unused_instruction_strands
     show_unused_instruction_strands = not show_unused_instruction_strands
+
+
+def toggle_compress_svg_drawings():
+    global compress_svg_drawings
+    compress_svg_drawings = not compress_svg_drawings
 
 
 def convert_tm_to_simd():
@@ -1682,8 +1718,9 @@ def simd_simulator(args):
                    '8': toggle_step_by_step_simulation,
                    '9': toggle_keep_results,
                    '10': toggle_show_unused_instruction_strands,
-                   '11': convert_tm_to_simd,
-                   '12': exit_loop}
+                   '11': toggle_compress_svg_drawings,
+                   '12': convert_tm_to_simd,
+                   '13': exit_loop}
 
     while program_loop:
         choice = input('''Enter one of the following options:
@@ -1697,10 +1734,12 @@ def simd_simulator(args):
 8 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
                        '''9 - ''' + (
                            'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
-                       '''10 - ''' + ('Don\'t Show unused instruction strands\n' if show_unused_instruction_strands
+                       '''10 - ''' + ('Don\'t show unused instruction strands\n' if show_unused_instruction_strands
                                       else 'Show unused instruction strands\n') +
-                       '''11 - Convert turingmachine.io Turing machine to SIMD register
-12 - Exit
+                       '''11 - ''' + ('Don\'t compress SVG drawings\n' if compress_svg_drawings
+                                      else 'Compress SVG drawings\n') +
+                       '''12 - Convert turingmachine.io Turing machine to SIMD register
+13 - Exit
 
 ''')
 
