@@ -6,7 +6,6 @@ import re
 import ruamel.yaml as yaml
 from json import JSONEncoder
 from functools import partial
-import colorsys
 
 program_loop = True
 step_by_step_simulation = False
@@ -469,9 +468,13 @@ class Register:
                             str(self._svg_vertical_offset - self._svg_current_size_parameters['cell_height']) + "mm"),
                            stroke=svgwrite.rgb(0, 0, 0)))
 
-    def svg_draw_strands(self, strand_set, layer, use_lighter_colors=False):
+    def svg_draw_strands(self, strand_set, layer, is_unattached_set=False):
+        global compress_svg_drawings
         if strand_set is None:
             return
+
+        non_complementary_stroke_dasharray = "4,2" if is_unattached_set and compress_svg_drawings else "1,0"
+        complementary_stroke_dasharray = "4,2" if is_unattached_set or not compress_svg_drawings else "1,0"
 
         layer_offset = self._svg_current_size_parameters['layer_offset'] if layer != 1 else self._svg_domain_length
         y = self._svg_vertical_offset - layer * layer_offset
@@ -489,7 +492,7 @@ class Register:
             cell = cell_types[cell_name]
             for i in range(len(cell.domains)):
                 left = self._svg_current_size_parameters['left_offset'] + (
-                            i + previous_domains) * self._svg_domain_length
+                        i + previous_domains) * self._svg_domain_length
                 short_right = str(left + 3 * self._svg_domain_length // 5) + "mm"
                 short_left = str(left + self._svg_domain_length // 3) + "mm"
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
@@ -497,26 +500,25 @@ class Register:
                                                                                             strand_set=strand_set)
                 strand = strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
                     strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
-                color = convert_hex_to_rgb('#000000', use_lighter_colors) if strand is None \
-                    else convert_hex_to_rgb(strand.color, use_lighter_colors)
+                color = convert_hex_to_rgb('#000000') if strand is None \
+                    else convert_hex_to_rgb(strand.color)
                 if len(orthogonal_coverings) >= 1 and crossover_start is None:
                     orthogonal_strand = orthogonal_coverings[0]
-                    orthogonal_color = convert_hex_to_rgb(strand_types[orthogonal_strand['strand_name']].color,
-                                                          use_lighter_colors)
+                    orthogonal_color = convert_hex_to_rgb(strand_types[orthogonal_strand['strand_name']].color)
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
                     previous_left = self._svg_current_size_parameters['left_offset'] + (
-                                i - 1 + previous_domains) * self._svg_domain_length
+                            i - 1 + previous_domains) * self._svg_domain_length
                     right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
 
                     if current_start is not None and orthogonal_strand['strand_name'] == current_strand:
                         if strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._dwg.add(
                                 self._dwg.line((current_start, y), (right, y), stroke=orthogonal_color,
-                                               stroke_width="1mm", stroke_dasharray="4,2"))
+                                               stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
                         else:
                             self._dwg.add(
                                 self._dwg.line((current_start, y), (right, y), stroke=orthogonal_color,
-                                               stroke_width="1mm"))
+                                               stroke_width="1mm", stroke_dasharray=non_complementary_stroke_dasharray))
                         current_start = None
                         current_strand = None
 
@@ -529,7 +531,7 @@ class Register:
                             self._dwg.add(
                                 self._dwg.line((previous_right_minus, y_diagonal_offset), (right_minus, upper_y_offset),
                                                stroke=orthogonal_color,
-                                               stroke_width="1mm", stroke_dasharray="4,2"))
+                                               stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
                         else:
                             self._svg_draw_upper_right_arrow(float(right_minus[:-2]) + diagonal_strand_offset,
                                                              float(upper_y[:-2]) + diagonal_strand_offset,
@@ -537,10 +539,11 @@ class Register:
                             self._dwg.add(
                                 self._dwg.line((previous_right_minus, y_diagonal_offset), (right_minus, upper_y_offset),
                                                stroke=orthogonal_color,
-                                               stroke_width="1mm"))
+                                               stroke_width="1mm",
+                                               stroke_dasharray=non_complementary_stroke_dasharray))
                     else:
                         left_plus = self._svg_current_size_parameters['left_offset'] + (
-                                    i + previous_domains) * self._svg_domain_length \
+                                i + previous_domains) * self._svg_domain_length \
                                     + 2 * diagonal_strand_offset
                         right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3 \
                                          + diagonal_strand_offset) + "mm"
@@ -550,11 +553,13 @@ class Register:
                                                             orthogonal_color)
                             self._dwg.add(self._dwg.line((left_plus, upper_y_offset), (right_plus, y_diagonal_offset),
                                                          stroke=orthogonal_color,
-                                                         stroke_width="1mm", stroke_dasharray="4,2"))
+                                                         stroke_width="1mm",
+                                                         stroke_dasharray=complementary_stroke_dasharray))
                         else:
                             self._dwg.add(self._dwg.line((left_plus, upper_y_offset), (right_plus, y_diagonal_offset),
                                                          stroke=orthogonal_color,
-                                                         stroke_width="1mm"))
+                                                         stroke_width="1mm",
+                                                         stroke_dasharray=non_complementary_stroke_dasharray))
 
                 if len(domain_coverings) > 1 or crossover_start is not None:
                     if crossover_start is None:
@@ -578,7 +583,9 @@ class Register:
                         left_diagonal_end = str(left_diagonal_end) + "mm"
                         top_y = str(float(y[:-2]) + diagonal_strand_offset - (
                                 crossover_domain_count - 0.5) * self._svg_domain_length) + "mm"
-                        self._svg_draw_horizontal_line(strand, current_start, crossover_start, y, first_color, False)
+                        self._svg_draw_horizontal_line(strand, current_start, crossover_start, y, first_color, False,
+                                                       non_complementary_stroke_dasharray,
+                                                       complementary_stroke_dasharray)
                         self._dwg.add(self._dwg.line((right_diagonal_start, top_y), (right_diagonal_end,
                                                                                      y_diagonal_offset),
                                                      stroke=second_color,
@@ -604,7 +611,9 @@ class Register:
                         if strand.is_complementary and index == 0:
                             self._svg_draw_left_arrow(float(current_start[:-2]), int(y[:-2]), color)
                     elif index == len(strand.domains) - 1:
-                        self._svg_draw_horizontal_line(strand, current_start, short_right, y, color, True)
+                        self._svg_draw_horizontal_line(strand, current_start, short_right, y, color, True,
+                                                       non_complementary_stroke_dasharray,
+                                                       complementary_stroke_dasharray)
                         current_start = None
                         current_strand = None
                         if delayed_draw_arrow is not None:
@@ -616,9 +625,9 @@ class Register:
         if len(strand_set) >= 1:
             last_covering = strand_set[-1]
             strand = strand_types[last_covering['strand_name']]
-            color = convert_hex_to_rgb(strand.color, use_lighter_colors)
+            color = convert_hex_to_rgb(strand.color)
             previous_left = self._svg_current_size_parameters['left_offset'] + (
-                        previous_domains - 1) * self._svg_domain_length
+                    previous_domains - 1) * self._svg_domain_length
             right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
             right_minus = str(float(right[:-2]) - 0.5) + "mm"
             last_index = last_covering['start_index'] + len(strand.domains)
@@ -630,32 +639,35 @@ class Register:
                 if strand.is_complementary:
                     self._dwg.add(
                         self._dwg.line((current_start, y), (right, y), stroke=color,
-                                       stroke_width="1mm", stroke_dasharray="4,2"))
+                                       stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
                 else:
                     self._dwg.add(
                         self._dwg.line((current_start, y), (right, y), stroke=color,
-                                       stroke_width="1mm"))
+                                       stroke_width="1mm", stroke_dasharray=non_complementary_stroke_dasharray))
 
             if last_index > previous_domains:
                 if strand.is_complementary:
                     self._dwg.add(self._dwg.line((right_minus, y), (last_right, upper_y), stroke=color,
-                                                 stroke_width="1mm", stroke_dasharray="4,2"))
+                                                 stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
                 else:
                     self._svg_draw_upper_right_arrow(float(last_right[:-2]), float(upper_y[:-2]), color)
                     self._dwg.add(self._dwg.line((right_minus, y), (last_right, upper_y), stroke=color,
-                                                 stroke_width="1mm"))
+                                                 stroke_width="1mm",
+                                                 stroke_dasharray=non_complementary_stroke_dasharray))
 
-    def _svg_draw_horizontal_line(self, strand, current_start, short_right, y, color, draw_arrow_head):
+    def _svg_draw_horizontal_line(self, strand, current_start, short_right, y, color, draw_arrow_head,
+                                  non_complementary_stroke_dasharray,
+                                  complementary_stroke_dasharray):
         if strand.is_complementary:
             self._dwg.add(
                 self._dwg.line((current_start, y), (short_right, y), stroke=color,
-                               stroke_width="1mm", stroke_dasharray="4,2"))
+                               stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
         else:
             if draw_arrow_head:
                 self._svg_draw_right_arrow(int(short_right[:-2]), int(y[:-2]), color)
             self._dwg.add(
                 self._dwg.line((current_start, y), (short_right, y), stroke=color,
-                               stroke_width="1mm"))
+                               stroke_width="1mm", stroke_dasharray=non_complementary_stroke_dasharray))
 
     def _svg_draw_cell_strand_labels(self):
         global cell_types
@@ -761,14 +773,10 @@ class Register:
         return self
 
 
-def convert_hex_to_rgb(hex_rgb, use_lighter_colors=False):
+def convert_hex_to_rgb(hex_rgb):
     red = int(hex_rgb[1:3], 16)
     green = int(hex_rgb[3:5], 16)
     blue = int(hex_rgb[5:7], 16)
-    if use_lighter_colors:
-        hue, lum, sat = colorsys.rgb_to_hls(red / 255, green / 255, blue / 255)
-        lum = 0.8
-        red, green, blue = tuple([int(color * 255) for color in colorsys.hls_to_rgb(hue, lum, sat)])
     return 'rgb(%d, %d, %d)' % (red, green, blue)
 
 
@@ -918,7 +926,7 @@ def run_simulation():
             else:
                 pre_instruction_register.print(new_strands, unattached_matches)
                 register.svg_draw_strands(new_strands, 3)
-                register.svg_draw_strands(unattached_matches, 3 if compress_svg_drawings else 6, compress_svg_drawings)
+                register.svg_draw_strands(unattached_matches, 3 if compress_svg_drawings else 6, True)
                 print()
 
             register.svg_increment_vertical_offset()
