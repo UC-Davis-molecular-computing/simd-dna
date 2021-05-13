@@ -401,7 +401,7 @@ class Register:
 
         return False
 
-    def svg_draw_contents(self, name=None, num_instructions=None, label=None):
+    def svg_initialize(self, name=None, num_instructions=None,):
         if self._dwg is None:
             name = name if name is not None else 'output'
             if compress_svg_drawings:
@@ -414,6 +414,7 @@ class Register:
                          + (num_instructions * self._svg_current_size_parameters['vertical_offset_increment'])) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
+    def svg_draw_contents(self, label=None):
         self._svg_draw_register_outline(label)
         self.svg_draw_strands(self.coverings, 1)
         self._svg_draw_cell_strand_labels()
@@ -873,6 +874,7 @@ def run_simulation():
     for register_key in register_copies.keys():
         print(register_key)
         register = register_copies[register_key]
+        register.svg_initialize(register_key, len(instructions))
 
         total_domains = 0
         for cell_name in register.cells:
@@ -886,7 +888,6 @@ def run_simulation():
 
             pre_instruction_register = copy.deepcopy(register)
             label = ("" if compress_svg_drawings else "Instruction ") + str(inst_num + 1)
-            register.svg_draw_contents(register_key, len(instructions), label)
             inst = instructions[inst_num]
             new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
@@ -925,11 +926,14 @@ def run_simulation():
                 print('No changes\n')
             else:
                 pre_instruction_register.print(new_strands, unattached_matches)
-                register.svg_draw_strands(new_strands, 3)
-                register.svg_draw_strands(unattached_matches, 3 if compress_svg_drawings else 6, True)
                 print()
 
-            register.svg_increment_vertical_offset()
+            if len(new_strands) > 0:
+                pre_instruction_register._dwg = register._dwg
+                pre_instruction_register.svg_draw_contents(label)
+                register.svg_draw_strands(new_strands, 3)
+                register.svg_draw_strands(unattached_matches, 3 if compress_svg_drawings else 6, True)
+                register.svg_increment_vertical_offset()
 
             if step_by_step_simulation:
                 input('Press Enter to continue')
@@ -938,7 +942,7 @@ def run_simulation():
         register.print()
         print()
         label = "F" if compress_svg_drawings else "Final result"
-        register.svg_draw_contents(register_key, label=label)
+        register.svg_draw_contents(label=label)
         register.save_svg()
         if step_by_step_simulation:
             input('Press Enter to continue')
