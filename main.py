@@ -1306,18 +1306,12 @@ def generate_tm_instructions(transition_data, blank_symbol):
         restart.is_complementary = True
         strand_types['({},{})_restart'.format(*configuration)] = restart
 
+    instructions.append(['({},{})_plug'.format(*configuration) for configuration in configurations])
+
     num_configurations = len(transition_data)
     for i in range(num_configurations):
         configuration = configurations[i]
-        first_instruction = []
-        if i == 0:
-            for other_conf in configurations[1:]:
-                first_instruction.append('({},{})_plug'.format(*other_conf))
-        else:
-            first_instruction.append('({},{})_unplug'.format(*configuration))
-
-        if len(first_instruction) > 0:
-            instructions.append(first_instruction)
+        instructions.append(['({},{})_unplug'.format(*configuration)])
 
         transition = transition_data[configuration]
         if 'L' in transition.keys():
