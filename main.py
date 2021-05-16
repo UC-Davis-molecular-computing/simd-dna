@@ -994,6 +994,9 @@ def convert_tm_to_simd():
     filename = input('Enter the YAML file name: ')
     with open(filename, 'r') as file:
         data = yaml.safe_load(file)
+        if not 'input' in data.keys():
+            data['input'] = ''
+
         blank = str(data['blank'])
 
         state_table_contains_unsupported_character = False
