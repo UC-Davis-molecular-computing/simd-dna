@@ -1,5 +1,5 @@
 # simd-dna
-A Python simulator for the SIMD||DNA model of computation, as defined in http://users.ece.utexas.edu/~soloveichik/papers/simd-dna.pdf
+A Python simulator for the SIMD||DNA model of computation, as defined in https://doi.org/10.1007/978-3-030-26807-7_12 (preprint: http://users.ece.utexas.edu/~soloveichik/papers/simd-dna.pdf)
 
 # Setup
 1. Install PyCharm: https://www.jetbrains.com/pycharm/
