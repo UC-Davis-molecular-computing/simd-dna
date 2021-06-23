@@ -6,8 +6,6 @@ from json import JSONEncoder
 
 
 class Strand:
-    strand_types = {}
-
     def __init__(self, domains, is_complementary, color='#000000'):
         self.domains = domains
         self.is_complementary = is_complementary
@@ -25,8 +23,6 @@ class Strand:
 
 
 class Cell:
-    cell_types = {}
-
     def __init__(self, domains, strand_labels=[]):
         self.domains = domains
         self.strand_labels = strand_labels
@@ -36,9 +32,13 @@ class Cell:
         self = Cell(domains, strand_labels)
         return self
 
+    def add_strand_label(self, coordinate_strand_pairs, string_label):
+        coordinate_strand_pairs.sort(key=lambda x: x[0])
+        label = {'strands': coordinate_strand_pairs, 'label': string_label}
+        self.strand_labels.append(label)
+
 
 class Register:
-    registers = {}
     compress_svg_drawings = False
     _svg_domain_length = 5  # millimeters
     _svg_normal_size_parameters = {
@@ -58,7 +58,9 @@ class Register:
         'layer_offset': 3
     }
 
-    def __init__(self):
+    def __init__(self, cell_types=None, strand_types=None):
+        self.cell_types = cell_types
+        self.strand_types = strand_types
         self.cells = []
         self.coverings = []
         self._dwg = None
@@ -68,12 +70,12 @@ class Register:
 
     def add_cell(self, cell_name):
         self.cells.append(cell_name)
-        self._total_domains += len(Cell.cell_types[cell_name].domains)
+        self._total_domains += len(self.cell_types[cell_name].domains)
 
     def get_cell_at_domain_index(self, domain_index):
         total_domains = 0
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             if total_domains <= domain_index < total_domains + len(cell.domains):
                 return cell, domain_index - total_domains
             total_domains += len(cell.domains)
@@ -94,7 +96,7 @@ class Register:
             strand_set = self.coverings
         for covering in strand_set:
             start_index = covering['start_index']
-            strand = Strand.strand_types[covering['strand_name']]
+            strand = self.strand_types[covering['strand_name']]
             if start_index <= domain_index < start_index + len(strand.domains):
                 if domain_label == strand.domains[domain_index - start_index]:
                     coverings.append(covering)
@@ -110,16 +112,16 @@ class Register:
         if domain_index < 0:
             total_domains = 0
             for cell_name in self.cells:
-                total_domains += len(Cell.cell_types[cell_name].domains)
+                total_domains += len(self.cell_types[cell_name].domains)
 
             domain_index += total_domains
-        strand = Strand.strand_types[strand_type]
+        strand = self.strand_types[strand_type]
 
         if strand.is_complementary:
             displaced_strands = []
             displacing_strands = []
             for covering in self.coverings:
-                top_strand = Strand.strand_types[covering['strand_name']]
+                top_strand = self.strand_types[covering['strand_name']]
                 is_match = True
                 for i in range(len(top_strand.domains)):
                     if strand.domains[i] != top_strand.domains[i]:
@@ -189,7 +191,7 @@ class Register:
 
         for covering in coverings:
             strand_start = covering['start_index']
-            strand = Strand.strand_types[covering['strand_name']]
+            strand = self.strand_types[covering['strand_name']]
             strand_end = strand_start + len(strand.domains)
             insecure_domains = 0
             for i in range(strand_start, strand_end):
@@ -219,7 +221,7 @@ class Register:
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True)
@@ -242,7 +244,7 @@ class Register:
 
         if len(self.coverings) >= 1:
             last_covering = self.coverings[-1]
-            strand = Strand.strand_types[last_covering['strand_name']]
+            strand = self.strand_types[last_covering['strand_name']]
             for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
                 print('/', end='')
 
@@ -251,13 +253,13 @@ class Register:
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 coverings = self.get_coverings_at_domain_index(previous_domains + i)
                 if len(coverings) == 0:
                     print('□', end='')
                 elif len(coverings) == 1:
-                    strand = Strand.strand_types[coverings[0]['strand_name']]
+                    strand = self.strand_types[coverings[0]['strand_name']]
                     index = previous_domains + i - coverings[0]['start_index']
                     if index < len(strand.domains) - 1:
                         print('=', end='')
@@ -275,7 +277,7 @@ class Register:
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True,
@@ -300,7 +302,7 @@ class Register:
 
         if len(strand_set) >= 1:
             last_covering = strand_set[-1]
-            strand = Strand.strand_types[last_covering['strand_name']]
+            strand = self.strand_types[last_covering['strand_name']]
             for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
                 print('/', end='')
 
@@ -309,13 +311,13 @@ class Register:
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 coverings = self.get_coverings_at_domain_index(previous_domains + i, strand_set=strand_set)
                 if len(coverings) == 0:
                     print(' ', end='')
                 elif len(coverings) == 1:
-                    strand = Strand.strand_types[coverings[0]['strand_name']]
+                    strand = self.strand_types[coverings[0]['strand_name']]
                     index = previous_domains + i - coverings[0]['start_index']
                     if strand.is_complementary:
                         if index == 0:
@@ -339,7 +341,7 @@ class Register:
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 print(blank_char, end='')
 
@@ -369,8 +371,7 @@ class Register:
         sanitized_strands.sort(key=lambda x: x['start_index'])
         return sanitized_strands
 
-    @staticmethod
-    def strands_intersect(strand_1, strand_2):
+    def strands_intersect(self, strand_1, strand_2):
         if strand_1['start_index'] > strand_2['start_index']:
             temp = strand_2
             strand_2 = strand_1
@@ -378,8 +379,8 @@ class Register:
 
         start_1 = strand_1['start_index']
         start_2 = strand_2['start_index']
-        domains_1 = Strand.strand_types[strand_1['strand_name']].domains
-        domains_2 = Strand.strand_types[strand_2['strand_name']].domains
+        domains_1 = self.strand_types[strand_1['strand_name']].domains
+        domains_2 = self.strand_types[strand_2['strand_name']].domains
         diff = start_2 - start_1
         for i in range(diff, len(domains_1)):
             if domains_1[i] == domains_2[i - diff]:
@@ -427,7 +428,7 @@ class Register:
 
         domains = 0
         for cell in self.cells:
-            cell_type = Cell.cell_types[cell]
+            cell_type = self.cell_types[cell]
             num_domains = len(cell_type.domains)
             self._dwg.add(
                 self._dwg.line((str(self._svg_current_size_parameters['left_offset'] + domains) + "mm",
@@ -475,7 +476,7 @@ class Register:
         crossover_strand = None
         delayed_draw_arrow = None
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
+            cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
                 left = self._svg_current_size_parameters['left_offset'] + (
                         i + previous_domains) * self._svg_domain_length
@@ -484,20 +485,20 @@ class Register:
                 domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
                                                                                             include_orthogonal=True,
                                                                                             strand_set=strand_set)
-                strand = Strand.strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
-                    Strand.strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
+                strand = self.strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
+                    self.strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 else None
                 color = convert_hex_to_rgb('#000000') if strand is None \
                     else convert_hex_to_rgb(strand.color)
                 if len(orthogonal_coverings) >= 1 and crossover_start is None:
                     orthogonal_strand = orthogonal_coverings[0]
-                    orthogonal_color = convert_hex_to_rgb(Strand.strand_types[orthogonal_strand['strand_name']].color)
+                    orthogonal_color = convert_hex_to_rgb(self.strand_types[orthogonal_strand['strand_name']].color)
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
                     previous_left = self._svg_current_size_parameters['left_offset'] + (
                             i - 1 + previous_domains) * self._svg_domain_length
                     right = str(previous_left + 3 * self._svg_domain_length // 5) + "mm"
 
                     if current_start is not None and orthogonal_strand['strand_name'] == current_strand:
-                        if Strand.strand_types[orthogonal_strand['strand_name']].is_complementary:
+                        if self.strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._dwg.add(
                                 self._dwg.line((current_start, y), (right, y), stroke=orthogonal_color,
                                                stroke_width="1mm", stroke_dasharray=complementary_stroke_dasharray))
@@ -513,7 +514,7 @@ class Register:
                         right_minus = str(float(right[:-2]) - 0.5 + self._svg_domain_length
                                           + diagonal_strand_offset) + "mm"
                         previous_right_minus = str(float(right[:-2]) - 0.5 + diagonal_strand_offset) + "mm"
-                        if Strand.strand_types[orthogonal_strand['strand_name']].is_complementary:
+                        if self.strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._dwg.add(
                                 self._dwg.line((previous_right_minus, y_diagonal_offset), (right_minus, upper_y_offset),
                                                stroke=orthogonal_color,
@@ -534,7 +535,7 @@ class Register:
                         right_plus = str(left_plus + self._svg_domain_length + self._svg_domain_length // 3 \
                                          + diagonal_strand_offset) + "mm"
                         left_plus = str(left_plus) + "mm"
-                        if Strand.strand_types[orthogonal_strand['strand_name']].is_complementary:
+                        if self.strand_types[orthogonal_strand['strand_name']].is_complementary:
                             self._svg_draw_upper_left_arrow(float(left_plus[:-2]), float(upper_y_offset[:-2]),
                                                             orthogonal_color)
                             self._dwg.add(self._dwg.line((left_plus, upper_y_offset), (right_plus, y_diagonal_offset),
@@ -559,8 +560,8 @@ class Register:
                     crossover_domain_count += 1
 
                     if len(next_coverings) + len(orthogonal_coverings) <= 1:
-                        first_color = Strand.strand_types[current_strand].color
-                        second_color = Strand.strand_types[crossover_strand].color
+                        first_color = self.strand_types[current_strand].color
+                        second_color = self.strand_types[crossover_strand].color
                         left_diagonal_start = float(crossover_start[:-2]) - 0.5 + diagonal_strand_offset
                         right_diagonal_start = str(left_diagonal_start - diagonal_strand_offset) + "mm"
                         left_diagonal_start = str(left_diagonal_start) + "mm"
@@ -610,7 +611,7 @@ class Register:
 
         if len(strand_set) >= 1:
             last_covering = strand_set[-1]
-            strand = Strand.strand_types[last_covering['strand_name']]
+            strand = self.strand_types[last_covering['strand_name']]
             color = convert_hex_to_rgb(strand.color)
             previous_left = self._svg_current_size_parameters['left_offset'] + (
                     previous_domains - 1) * self._svg_domain_length
@@ -658,8 +659,8 @@ class Register:
     def _svg_draw_cell_strand_labels(self):
         previous_domains = 0
         for cell_name in self.cells:
-            cell = Cell.cell_types[cell_name]
-            labels = Cell.cell_types[cell_name].strand_labels
+            cell = self.cell_types[cell_name]
+            labels = self.cell_types[cell_name].strand_labels
             is_match = [True for _ in labels]
             for i in range(len(labels)):
                 label = labels[i]
@@ -743,8 +744,8 @@ class Register:
             self._dwg = None
 
     @staticmethod
-    def decode_json(cells, coverings, **kwargs):
-        self = Register()
+    def decode_json(cell_types, strand_types, cells, coverings, **kwargs):
+        self = Register(cell_types, strand_types)
         self.cells = cells
 
         self.coverings = []
@@ -753,7 +754,7 @@ class Register:
                                    'strand_name': covering['strand_name']})
 
         for cell in self.cells:
-            self._total_domains += len(Cell.cell_types[cell].domains)
+            self._total_domains += len(self.cell_types[cell].domains)
 
         return self
 

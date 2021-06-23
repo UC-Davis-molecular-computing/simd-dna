@@ -1,31 +1,23 @@
+import sys
+
 from simd_dna import *
 import copy
-import sys
 import json
 
 program_loop = True
-step_by_step_simulation = False
-keep_results = False
-show_unused_instruction_strands = False
-instructions = []
+local_simulation = Simulation()
 
 
 def add_cell_type():
     name = input('Enter cell type name: ')
     domains = input('Enter domain names, separated by commas: ').split(',')
-    if name not in Cell.cell_types.keys():
-        Cell.cell_types[name] = Cell(domains)
+    local_simulation.add_cell_type(name, domains)
 
 
 def add_cells_to_register():
     register_name = input('Enter register name: ')
-    if register_name not in Register.registers:
-        Register.registers[register_name] = Register()
-
-    current_register = Register.registers[register_name]
-
     cell_name = input('Enter the cell name: ')
-    if cell_name not in Cell.cell_types.keys():
+    if cell_name not in local_simulation.cell_types.keys():
         print('No such cell exists')
         return
 
@@ -37,25 +29,26 @@ def add_cells_to_register():
     else:
         coverings = coverings.split(';')
 
-    cell_size = len(Cell.cell_types[cell_name].domains)
-    for _ in range(copies):
-        current_register.add_cell(cell_name)
-        for covering in coverings:
-            data = covering.split(',')
-            strand_type = data[0]
-            offset = int(data[1])
-            current_register.attempt_attachment(-cell_size + offset, strand_type)
+    coverings = list(map(extract_covering_offset_pair, coverings))
+
+    local_simulation.add_cells_to_register(register_name, cell_name, coverings, copies)
+
+
+def extract_covering_offset_pair(value):
+    pair = value.split(',')
+    pair[1] = int(pair[1])
+    return pair
 
 
 def add_strand_type():
     name = input('What is the strand name? ')
     domains = input('Enter domains separated by commas: ').split(',')
-    is_complementary = input('Is the strand complementary to the top strand? Y or N? ')
+    is_complementary = input('Is the strand complementary to the top strand? Y or N? ').lower() == 'y'
     color = input('What is the color hex code? ')
     if color == '':
-        color = '#000000'
-
-    Strand.strand_types[name] = Strand(domains, True if is_complementary.lower() == 'y' else False, color)
+        local_simulation.add_strand_type(name, domains, is_complementary)
+    else:
+        local_simulation.add_strand_type(name, domains, is_complementary, color)
 
 
 def add_instruction():
@@ -65,49 +58,39 @@ def add_instruction():
         strand_name = input('Enter the strand name: ')
         instruction.append(strand_name)
 
-    instructions.append(instruction)
+    local_simulation.add_instruction(instruction)
 
 
 def add_cell_strand_label():
     data = input('Enter the cell name, followed by the coordinate-strand name pairs, followed by the string label, \
 all separated by commas: ').split(',')
-    label = {'strands': [], 'label': data[-1]}
+    coordinate_strand_pairs = []
     for i in range(1, len(data) - 1, 2):
-        strands = label['strands']
         index = int(data[i])
-        if len(strands) == 0:
-            strands.append([index, data[i + 1]])
-        else:
-            for j in range(len(strands)):
-                if strands[j][0] > index:
-                    strands.insert(j, [index, data[i + 1]])
-                    break
-
-                if j == len(strands) - 1:
-                    strands.append([index, data[i + 1]])
-    Cell.cell_types[data[0]].strand_labels.append(label)
+        coordinate_strand_pairs.append([index, data[i + 1]])
+    local_simulation.add_cell_strand_label(data[0], coordinate_strand_pairs, data[-1])
 
 
 def run_simulation():
-    register_copies = copy.deepcopy(Register.registers)
+    register_copies = copy.deepcopy(local_simulation.registers)
     for register_key in register_copies.keys():
         print(register_key)
         register = register_copies[register_key]
-        register.svg_initialize(register_key, len(instructions))
+        register.svg_initialize(register_key, len(local_simulation.instructions))
 
         total_domains = 0
         for cell_name in register.cells:
-            total_domains += len(Cell.cell_types[cell_name].domains)
+            total_domains += len(local_simulation.cell_types[cell_name].domains)
 
-        for inst_num in range(len(instructions)):
-            if show_unused_instruction_strands:
+        for inst_num in range(len(local_simulation.instructions)):
+            if local_simulation.show_unused_instruction_strands:
                 unattached_matches = []
             else:
                 unattached_matches = None
 
             pre_instruction_register = copy.deepcopy(register)
             label = ("" if Register.compress_svg_drawings else "Instruction ") + str(inst_num + 1)
-            inst = instructions[inst_num]
+            inst = local_simulation.instructions[inst_num]
             new_strands = []
             for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
                 displacement_occurred = True
@@ -154,7 +137,7 @@ def run_simulation():
                 register.svg_draw_strands(unattached_matches, 3 if Register.compress_svg_drawings else 6, True)
                 register.svg_increment_vertical_offset()
 
-            if step_by_step_simulation:
+            if local_simulation.step_by_step_simulation:
                 input('Press Enter to continue')
 
         print("Final result")
@@ -163,17 +146,19 @@ def run_simulation():
         label = "F" if Register.compress_svg_drawings else "Final result"
         register.svg_draw_contents(label=label)
         register.save_svg()
-        if step_by_step_simulation:
+        if local_simulation.step_by_step_simulation:
             input('Press Enter to continue')
 
-        if keep_results:
-            Register.registers[register_key] = register
+        if local_simulation.keep_results:
+            local_simulation.registers[register_key] = register
 
 
 def save_data():
     filename = input("Enter filename: ")
-    register_copies = copy.deepcopy(Register.registers)
+    register_copies = copy.deepcopy(local_simulation.registers)
     for register in register_copies.values():
+        del register.cell_types
+        del register.strand_types
         del register._dwg
         del register._svg_current_size_parameters
         del register._svg_vertical_offset
@@ -181,27 +166,24 @@ def save_data():
 
     with open(filename, 'w') as file:
         json.dump({
-            'cell_types': Cell.cell_types,
-            'strand_types': Strand.strand_types,
+            'cell_types': local_simulation.cell_types,
+            'strand_types': local_simulation.strand_types,
             'registers': register_copies,
-            'instructions': instructions
+            'instructions': local_simulation.instructions
         }, file, indent=4, cls=ObjectEncoder)
         file.flush()
 
 
 def toggle_step_by_step_simulation():
-    global step_by_step_simulation
-    step_by_step_simulation = not step_by_step_simulation
+    local_simulation.step_by_step_simulation = not local_simulation.step_by_step_simulation
 
 
 def toggle_keep_results():
-    global keep_results
-    keep_results = not keep_results
+    local_simulation.keep_results = not local_simulation.keep_results
 
 
 def toggle_show_unused_instruction_strands():
-    global show_unused_instruction_strands
-    show_unused_instruction_strands = not show_unused_instruction_strands
+    local_simulation.show_unused_instruction_strands = not local_simulation.show_unused_instruction_strands
 
 
 def toggle_compress_svg_drawings():
@@ -209,7 +191,7 @@ def toggle_compress_svg_drawings():
 
 
 def convert_tm_to_simd_wrapper():
-    convert_tm_to_simd(instructions)
+    convert_tm_to_simd(local_simulation)
 
 
 def exit_loop():
@@ -230,11 +212,13 @@ def simd_simulator(args):
         print('Loading saved data...')
         with open(args[1]) as file:
             data = json.load(file)
-            global instructions
-            Cell.cell_types = decode_json_dict(data['cell_types'], Cell)
-            Strand.strand_types = decode_json_dict(data['strand_types'], Strand)
-            Register.registers = decode_json_dict(data['registers'], Register)
-            instructions = data['instructions']
+            local_simulation.cell_types = decode_json_dict(data['cell_types'], Cell)
+            local_simulation.strand_types = decode_json_dict(data['strand_types'], Strand)
+            for key in data['registers']:
+                data['registers'][key]['cell_types'] = local_simulation.cell_types
+                data['registers'][key]['strand_types'] = local_simulation.strand_types
+            local_simulation.registers = decode_json_dict(data['registers'], Register)
+            local_simulation.instructions = data['instructions']
 
     choice_dict = {'1': add_cell_type,
                    '2': add_cells_to_register,
@@ -259,10 +243,11 @@ def simd_simulator(args):
 5 - Add cell-strand labels
 6 - Run simulation
 7 - Save data
-8 - Turn step-by-step simulation ''' + ('off\n' if step_by_step_simulation else 'on\n') +
+8 - Turn step-by-step simulation ''' + ('off\n' if local_simulation.step_by_step_simulation else 'on\n') +
                        '''9 - ''' + (
-                           'Don\'t keep results after simulation\n' if keep_results else 'Keep results after simulation\n') +
-                       '''10 - ''' + ('Don\'t show unused instruction strands\n' if show_unused_instruction_strands
+                           'Don\'t keep results after simulation\n' if local_simulation.keep_results else 'Keep results after simulation\n') +
+                       '''10 - ''' + ('Don\'t show unused instruction strands\n'
+                                      if local_simulation.show_unused_instruction_strands
                                       else 'Show unused instruction strands\n') +
                        '''11 - ''' + ('Don\'t compress SVG drawings\n' if Register.compress_svg_drawings
                                       else 'Compress SVG drawings\n') +
