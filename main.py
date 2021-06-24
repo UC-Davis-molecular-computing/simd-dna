@@ -72,67 +72,33 @@ all separated by commas: ').split(',')
 
 
 def run_simulation():
-    register_copies = copy.deepcopy(local_simulation.registers)
-    for register_key in register_copies.keys():
+    for register_key in local_simulation.registers.keys():
         print(register_key)
-        register = register_copies[register_key]
+        register = local_simulation.registers[register_key]
+        if local_simulation.keep_results:
+            original_register = None
+        else:
+            original_register = copy.deepcopy(register)
+            local_simulation.keep_results = True  # temporarily save results during instruction cycle
         register.svg_initialize(register_key, len(local_simulation.instructions))
 
-        total_domains = 0
-        for cell_name in register.cells:
-            total_domains += len(local_simulation.cell_types[cell_name].domains)
-
         for inst_num in range(len(local_simulation.instructions)):
-            if local_simulation.show_unused_instruction_strands:
-                unattached_matches = []
-            else:
-                unattached_matches = None
-
-            pre_instruction_register = copy.deepcopy(register)
             label = ("" if Register.compress_svg_drawings else "Instruction ") + str(inst_num + 1)
-            inst = local_simulation.instructions[inst_num]
-            new_strands = []
-            for _ in range(len(inst)):  # Repeat in case some strands should take effect after another
-                displacement_occurred = True
-                while displacement_occurred:  # Repeat in case of cascades
-                    new_attachments = []
-                    for strand_name in inst:
-                        for i in range(total_domains):
-                            new_attachment = register.attempt_attachment(i, strand_name, unattached_matches)
-                            if new_attachment is not None:
-                                new_attachments.extend(new_attachment)
-
-                    # do first round of displacements preserving the new strands
-                    if len(new_attachments) > 0:
-                        register.displace_strands(new_attachments)
-                    else:
-                        displacement_occurred = False
-
-                    displaced_strands = register.displace_strands()
-                    if displaced_strands == new_attachments:  # all new strands did not stably bind
-                        displacement_occurred = False
-                    else:
-                        new_strands.extend([strand for strand in new_attachments if strand not in displaced_strands])
-
-                    if unattached_matches is not None:
-                        unattached_matches.extend(displaced_strands)
+            register, before_register, new_strands, unattached_matches = local_simulation.run_instruction(register_key,
+                                                                                                          inst_num)
 
             print("Instruction", inst_num + 1)
-            new_strands.sort(key=lambda x: x['start_index'])
-            if unattached_matches is not None:
-                unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
-                unattached_matches = register.sanitize_unattached_strands(unattached_matches, new_strands)
 
             if (len(new_strands) == 0 and (
                     unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
                 print('No changes\n')
             else:
-                pre_instruction_register.print(new_strands, unattached_matches)
+                before_register.print(new_strands, unattached_matches)
                 print()
 
             if len(new_strands) > 0:
-                pre_instruction_register._dwg = register._dwg
-                pre_instruction_register.svg_draw_contents(label)
+                before_register._dwg = register._dwg
+                before_register.svg_draw_contents(label)
                 register.svg_draw_strands(new_strands, 3)
                 register.svg_draw_strands(unattached_matches, 3 if Register.compress_svg_drawings else 6, True)
                 register.svg_increment_vertical_offset()
@@ -146,11 +112,12 @@ def run_simulation():
         label = "F" if Register.compress_svg_drawings else "Final result"
         register.svg_draw_contents(label=label)
         register.save_svg()
+        if original_register is not None:
+            local_simulation.registers[register_key] = original_register
+            local_simulation.keep_results = False
+
         if local_simulation.step_by_step_simulation:
             input('Press Enter to continue')
-
-        if local_simulation.keep_results:
-            local_simulation.registers[register_key] = register
 
 
 def save_data():
