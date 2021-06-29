@@ -1,12 +1,12 @@
-input: '100111x'
-blank: 'x'
-start state: q0
+input: '100111 '
+blank: ' '
+start state: a
 table:
-  q0:
-    ['0', '1']: {R: q0}
-    'x': {L: q1}
-  q1:
-    '0': {write: 1, L: qH}
-    '1': {write: 0, L: q1}
-  qH:
-    
+  a:
+    [ '0', '1' ]: { R: a }
+    ' ': { L: b }
+  b:
+    '0': {write: 1, R: h}
+    '1': {write: 0, L: b}
+  h:
+
