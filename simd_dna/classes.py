@@ -401,15 +401,15 @@ class Register:
                          + (num_instructions * self._svg_current_size_parameters['vertical_offset_increment'])) + "mm"
             self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
-    def svg_draw_contents(self, label=None):
-        self._svg_draw_register_outline(label)
+    def svg_draw_contents(self, label=None, draw_x=False):
+        self._svg_draw_register_outline(label, draw_x)
         self.svg_draw_strands(self.coverings, 1)
         self._svg_draw_cell_strand_labels()
 
     def svg_increment_vertical_offset(self):
         self._svg_vertical_offset += self._svg_current_size_parameters['vertical_offset_increment']
 
-    def _svg_draw_register_outline(self, label):
+    def _svg_draw_register_outline(self, label, draw_x=False):
         if label is not None:
             self._dwg.add(
                 self._dwg.text(label, x=[str(float(self._svg_current_size_parameters['left_offset'] / 2)) + "mm"],
@@ -418,6 +418,20 @@ class Register:
                                fill=svgwrite.rgb(0, 0, 0),
                                style="text-anchor:middle;dominant-baseline:middle;font-size:20;"
                                      "font-family:sans-serif"))
+
+        if draw_x:
+            left = (self._svg_current_size_parameters['left_offset'] - 4) / 2
+            right = left + 4
+            up = self._svg_vertical_offset - 3 * self._svg_current_size_parameters['cell_height'] / 10
+            down = up + 4
+            self._dwg.add(self._dwg.line(
+                (str(left) + "mm", str(up) + "mm"), (str(right) + "mm", str(down) + "mm"),
+                stroke=svgwrite.rgb(255, 0, 0),
+                stroke_width="1mm"))
+            self._dwg.add(self._dwg.line(
+                (str(left) + "mm", str(down) + "mm"), (str(right) + "mm", str(up) + "mm"),
+                stroke=svgwrite.rgb(255, 0, 0),
+                stroke_width="1mm"))
 
         self._dwg.add(self._dwg.line(
             (str(self._svg_current_size_parameters['left_offset']) + "mm", str(self._svg_vertical_offset) + "mm"),

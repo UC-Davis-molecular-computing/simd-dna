@@ -98,7 +98,7 @@ def run_simulation():
 
             if len(new_strands) > 0:
                 before_register._dwg = register._dwg
-                before_register.svg_draw_contents(label)
+                before_register.svg_draw_contents(label, len(new_strands) == 0)
                 register.svg_draw_strands(new_strands, 3)
                 register.svg_draw_strands(unattached_matches, 3 if Register.compress_svg_drawings else 6, True)
                 register.svg_increment_vertical_offset()
