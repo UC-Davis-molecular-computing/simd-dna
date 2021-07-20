@@ -5,6 +5,7 @@ import copy
 import json
 
 program_loop = True
+compress_svg_drawings = False
 local_simulation = Simulation()
 
 
@@ -80,10 +81,11 @@ def run_simulation():
         else:
             original_register = copy.deepcopy(register)
             local_simulation.keep_results = True  # temporarily save results during instruction cycle
-        register.svg_initialize(register_key, len(local_simulation.instructions))
+        svg_drawing = RegisterSVGDrawing(compress_svg_drawings)
+        svg_drawing.initialize(register, register_key, len(local_simulation.instructions))
 
         for inst_num in range(len(local_simulation.instructions)):
-            label = ("" if Register.compress_svg_drawings else "Instruction ") + str(inst_num + 1)
+            label = ("" if svg_drawing.compress_svg_drawings else "Instruction ") + str(inst_num + 1)
             register, before_register, new_strands, unattached_matches = local_simulation.run_instruction(register_key,
                                                                                                           inst_num)
 
@@ -97,11 +99,11 @@ def run_simulation():
                 print()
 
             if len(new_strands) > 0:
-                before_register._dwg = register._dwg
-                before_register.svg_draw_contents(label, len(new_strands) == 0)
-                register.svg_draw_strands(new_strands, 3)
-                register.svg_draw_strands(unattached_matches, 3 if Register.compress_svg_drawings else 6, True)
-                register.svg_increment_vertical_offset()
+                svg_drawing.draw_contents(before_register, label, len(new_strands) == 0)
+                svg_drawing.draw_strands(register, new_strands, 3)
+                svg_drawing.draw_strands(register, unattached_matches,
+                                         3 if svg_drawing.compress_svg_drawings else 6, True)
+                svg_drawing.increment_vertical_offset()
 
             if local_simulation.step_by_step_simulation:
                 input('Press Enter to continue')
@@ -109,9 +111,9 @@ def run_simulation():
         print("Final result")
         register.print()
         print()
-        label = "F" if Register.compress_svg_drawings else "Final result"
-        register.svg_draw_contents(label=label)
-        register.save_svg()
+        label = "F" if svg_drawing.compress_svg_drawings else "Final result"
+        svg_drawing.draw_contents(register, label=label)
+        svg_drawing.save_svg()
         if original_register is not None:
             local_simulation.registers[register_key] = original_register
             local_simulation.keep_results = False
@@ -126,10 +128,7 @@ def save_data():
     for register in register_copies.values():
         del register.cell_types
         del register.strand_types
-        del register._dwg
-        del register._svg_current_size_parameters
-        del register._svg_vertical_offset
-        del register._total_domains
+        del register.total_domains
 
     with open(filename, 'w') as file:
         json.dump({
@@ -154,7 +153,8 @@ def toggle_show_unused_instruction_strands():
 
 
 def toggle_compress_svg_drawings():
-    Register.compress_svg_drawings = not Register.compress_svg_drawings
+    global compress_svg_drawings
+    compress_svg_drawings = not compress_svg_drawings
 
 
 def convert_tm_to_simd_wrapper():
@@ -212,11 +212,12 @@ def simd_simulator(args):
 7 - Save data
 8 - Turn step-by-step simulation ''' + ('off\n' if local_simulation.step_by_step_simulation else 'on\n') +
                        '''9 - ''' + (
-                           'Don\'t keep results after simulation\n' if local_simulation.keep_results else 'Keep results after simulation\n') +
+                           'Don\'t keep results after simulation\n' if local_simulation.keep_results
+                           else 'Keep results after simulation\n') +
                        '''10 - ''' + ('Don\'t show unused instruction strands\n'
                                       if local_simulation.show_unused_instruction_strands
                                       else 'Show unused instruction strands\n') +
-                       '''11 - ''' + ('Don\'t compress SVG drawings\n' if Register.compress_svg_drawings
+                       '''11 - ''' + ('Don\'t compress SVG drawings\n' if compress_svg_drawings
                                       else 'Compress SVG drawings\n') +
                        '''12 - Convert turingmachine.io Turing machine to SIMD register
 13 - Exit
