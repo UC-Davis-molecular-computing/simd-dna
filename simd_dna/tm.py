@@ -1,6 +1,7 @@
 from typing import Dict
 
 from simd_dna.simulation import *
+from functions import convert_rgb_to_hex
 import copy
 import re
 import ruamel.yaml as yaml
