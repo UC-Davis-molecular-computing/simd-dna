@@ -5,6 +5,15 @@ from json import JSONEncoder
 
 
 class Strand:
+    """This is a representation of a DNA strand in the SIMD||DNA model.
+
+    :param domains: A list of strings representing the domains of the strand in left to right order
+    :param is_complementary: A boolean that indicates whether the strand is complementary to the top strand of the
+    register or not. A top complementary strand in the SIMD||DNA model has the 3' end on the left and the 5' end
+    on the right.
+    :param color: A hexadecimal string that represents the strand's color when drawn in an SVG file
+    """
+
     def __init__(self, domains: List[str], is_complementary: bool, color: str = '#000000') -> None:
         self.domains = domains
         self.is_complementary = is_complementary
@@ -17,6 +26,15 @@ class Strand:
 
     @staticmethod
     def decode_json(domains: List[str], is_complementary: bool, color: str = '#000000', **kwargs) -> Strand:
+        """Decodes a JSON object and returns an instance of :class:sim_dna.classes.Strand
+
+        :param domains: A list of strings corresponding to the domains field
+        :param is_complementary: A boolean corresponding to the is_complementary field
+        :param color:  A string corresponding to the color field
+        :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
+        JSON object. Any excess data is ignored.
+        :return: A :class:sim_dna.classes.Strand object
+        """
         self = Strand(domains, is_complementary, color)
         return self
 
