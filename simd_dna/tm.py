@@ -1,13 +1,14 @@
-from typing import Dict
+from typing import Dict, List
 
 from simd_dna.simulation import *
-from functions import convert_rgb_to_hex
+from simd_dna.functions import convert_rgb_to_hex
+
 import copy
 import re
 import ruamel.yaml as yaml
 
 
-def convert_tm_to_simd(simulation):
+def convert_tm_to_simd(simulation: Simulation) -> None:
     filename = input('Enter the YAML file name: ')
     with open(filename, 'r') as file:
         data = yaml.safe_load(file)
@@ -53,7 +54,7 @@ def convert_tm_to_simd(simulation):
         generate_tm_to_simd_data_from_transitions(transition_data, data, register_name, simulation)
 
 
-def contains_outside_list(items, restricted_chars):
+def contains_outside_list(items: List, restricted_chars: List[str]) -> bool:
     for item in items:
         if str(item) not in restricted_chars:
             return True
@@ -61,7 +62,7 @@ def contains_outside_list(items, restricted_chars):
     return False
 
 
-def add_simd_transition(state, read, data, transition_data):
+def add_simd_transition(state, read, data, transition_data) -> None:
     key = (state, read)
     if 'write' not in data.keys():
         data['write'] = read

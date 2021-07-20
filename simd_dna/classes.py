@@ -1,9 +1,11 @@
+from __future__ import annotations
+from typing import Dict, List, Optional
 import re
 from json import JSONEncoder
 
 
 class Strand:
-    def __init__(self, domains, is_complementary, color='#000000'):
+    def __init__(self, domains: List[str], is_complementary: bool, color: str = '#000000') -> None:
         self.domains = domains
         self.is_complementary = is_complementary
         if re.match('^#?[A-Fa-f0-9]{6}$', color) is not None:
@@ -14,40 +16,40 @@ class Strand:
             self.color = '#000000'
 
     @staticmethod
-    def decode_json(domains, is_complementary, color='#000000', **kwargs):
+    def decode_json(domains: List[str], is_complementary: bool, color: str = '#000000', **kwargs) -> Strand:
         self = Strand(domains, is_complementary, color)
         return self
 
 
 class Cell:
-    def __init__(self, domains, strand_labels=[]):
+    def __init__(self, domains: List[str], strand_labels: List[Dict] = []) -> None:
         self.domains = domains
         self.strand_labels = strand_labels
 
     @staticmethod
-    def decode_json(domains, strand_labels=[], **kwargs):
+    def decode_json(domains: List[str], strand_labels: List[Dict] = [], **kwargs) -> Cell:
         self = Cell(domains, strand_labels)
         return self
 
-    def add_strand_label(self, coordinate_strand_pairs, string_label):
+    def add_strand_label(self, coordinate_strand_pairs: List, string_label: str) -> None:
         coordinate_strand_pairs.sort(key=lambda x: x[0])
         label = {'strands': coordinate_strand_pairs, 'label': string_label}
         self.strand_labels.append(label)
 
 
 class Register:
-    def __init__(self, cell_types=None, strand_types=None):
+    def __init__(self, cell_types: List[str] = [], strand_types: List[str] = []) -> None:
         self.cell_types = cell_types
         self.strand_types = strand_types
         self.cells = []
         self.coverings = []
         self.total_domains = 0
 
-    def add_cell(self, cell_name):
+    def add_cell(self, cell_name: str) -> None:
         self.cells.append(cell_name)
         self.total_domains += len(self.cell_types[cell_name].domains)
 
-    def get_cell_at_domain_index(self, domain_index):
+    def get_cell_at_domain_index(self, domain_index: int) -> (Optional[str], int):
         total_domains = 0
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
@@ -57,7 +59,9 @@ class Register:
 
         return None, 0
 
-    def get_coverings_at_domain_index(self, domain_index, include_orthogonal=False, strand_set=None):
+    def get_coverings_at_domain_index(self, domain_index: int,
+                                      include_orthogonal: bool = False,
+                                      strand_set=None):
         coverings = []
         cell, offset = self.get_cell_at_domain_index(domain_index)
         if cell is None:
