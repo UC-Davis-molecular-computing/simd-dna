@@ -96,5 +96,9 @@ Takes a Turing machine specification from http://turingmachine.io/ and creates t
 The register's contents are initialized to the string input on the Turing machine's tape as specified in the YAML file. This will reject any Turing machine that uses symbols other than 0, 1, and blank. 
 If the conversion is successful, the result can be immediately shown through the Run simulation option.
 
-13. Exit  
+13. Draw inert instructions in SVG
+Default value: Don't draw
+By default, if an instruction does not affect the register at all, the simulator will not draw that instruction in the SVG file. If turned on, the full instruction set will be draw, where inert instructions have a red X notated underneath the instruction number.
+
+14. Exit  
 Fin
