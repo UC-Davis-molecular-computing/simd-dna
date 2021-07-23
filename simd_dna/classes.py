@@ -40,12 +40,39 @@ class Strand:
 
 
 class Cell:
-    def __init__(self, domains: List[str], strand_labels: List[Dict] = []) -> None:
+    """This is a representation of a cell in the SIMD||DNA model. A cell is a unit of data in the register, and is
+    further subdivided into domains, which consist of a small number of nucleotides.
+
+    :param domains: A list of strings representing the domains of the cell in left to right order
+    :param strand_labels: A list of dictionaries that map strand patterns to string labels. A string label will be
+    written underneath the cell in the SVG drawing if the strand pattern matches. Each dictionary has the following
+    key-value pairs:
+    |
+    | strands: A 2D list, where the first index is an integer that represents the start index of a strand relative to
+    the first domain of the cell, starting at 0. The second index is the string name of the strand type that should be
+    present at that index for the pattern to match.
+    | label: A string that will be printed underneath the cell in the SVG if the strand pattern in 'strands' matches
+    the cell's current contents.
+    |
+    | One example is the following dictionary:
+    | {'strands': [[0, 'Zero-first'], [3, 'Zero-second']], 'label': '0'}
+    | This means that if a strand of type 'Zero-first' has its leftmost attached to domain 0 of the cell, and
+    a strand of type 'Zero-second' has its leftmost domain attached to domain 3 of the cell, then the label string '0'
+    will be written underneath that cell in the SVG drawing.
+    """
+
+    def __init__(self, domains: List[str], strand_labels: Optional[List[Dict]] = None) -> None:
+        if strand_labels is None:
+            strand_labels = []
+
         self.domains = domains
         self.strand_labels = strand_labels
 
     @staticmethod
-    def decode_json(domains: List[str], strand_labels: List[Dict] = [], **kwargs) -> Cell:
+    def decode_json(domains: List[str], strand_labels: Optional[List[Dict]] = None, **kwargs) -> Cell:
+        if strand_labels is None:
+            strand_labels = []
+
         self = Cell(domains, strand_labels)
         return self
 
@@ -56,7 +83,13 @@ class Cell:
 
 
 class Register:
-    def __init__(self, cell_types: List[str] = [], strand_types: List[str] = []) -> None:
+    def __init__(self, cell_types: Optional[List[str]] = None, strand_types: Optional[List[str]] = None) -> None:
+        if cell_types is None:
+            cell_types = []
+
+        if strand_types is None:
+            strand_types = []
+
         self.cell_types = cell_types
         self.strand_types = strand_types
         self.cells = []
