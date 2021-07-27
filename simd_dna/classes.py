@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, Tuple
 import re
 from json import JSONEncoder
 
@@ -56,7 +56,7 @@ class Cell:
     |
     | One example is the following dictionary:
     | {'strands': [[0, 'Zero-first'], [3, 'Zero-second']], 'label': '0'}
-    | This means that if a strand of type 'Zero-first' has its leftmost attached to domain 0 of the cell, and
+    | This means that if a strand of type 'Zero-first' has its leftmost domain attached to domain 0 of the cell, and
     a strand of type 'Zero-second' has its leftmost domain attached to domain 3 of the cell, then the label string '0'
     will be written underneath that cell in the SVG drawing.
     """
@@ -70,6 +70,14 @@ class Cell:
 
     @staticmethod
     def decode_json(domains: List[str], strand_labels: Optional[List[Dict]] = None, **kwargs) -> Cell:
+        """Decodes a JSON object and returns an instance of :class:sim_dna.classes.Cell .
+
+        :param domains: A list of strings corresponding to the domains field
+        :param strand_labels: A list of dictionaries corresponding to the strand_labels field
+        :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
+        JSON object. Any excess data is ignored.
+        :return: A :class:sim_dna.classes.Cell object
+        """
         if strand_labels is None:
             strand_labels = []
 
@@ -77,13 +85,36 @@ class Cell:
         return self
 
     def add_strand_label(self, coordinate_strand_pairs: List, string_label: str) -> None:
+        """Adds a new strand label to the cell type. See :class:sim_dna.classes.Cell for a detailed breakdown of the
+        strand label's data structure.
+
+        :param coordinate_strand_pairs: A 2D list, where the first index is an integer that represents the start index
+        of a strand relative to the first domain of the cell, starting at 0. The second index is the string name of the
+        strand type that should be present at that index for the pattern to match.
+        :param string_label: A string that will be printed underneath the cell in the SVG if the strand pattern in
+        'strands' matches the cell's current contents.
+        """
         coordinate_strand_pairs.sort(key=lambda x: x[0])
         label = {'strands': coordinate_strand_pairs, 'label': string_label}
         self.strand_labels.append(label)
 
 
 class Register:
-    def __init__(self, cell_types: Optional[List[str]] = None, strand_types: Optional[List[str]] = None) -> None:
+    """This is a representation of a register in the SIMD||DNA model. A register, in practice, is a long DNA strand
+    attached to a magnetic bead. This long DNA strand is referred to as the \"bottom strand\", and information is
+    stored and encoded through nick patterns in the attached \"top strands.\" Instruction strands are applied to a
+    register, where the top strands are altered through DNA strand displacement. Waste products are washed away before
+    the next instruction strands are applied.
+
+    :param cell_types: A dictionary of :class:sim_dna.classes.Cell instances representing the possible cell types that
+    can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
+    cell name, to the actual :class:sim_dna.classes.Cell instance.
+    :param strand_types: A dictionary of :class:sim_dna.classes.Strand instances representing the possible strand types
+    that can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
+    strand name, to the actual :class:sim_dna.classes.Strand instance.
+    """
+
+    def __init__(self, cell_types: Optional[Dict[str]] = None, strand_types: Optional[Dict[str]] = None) -> None:
         if cell_types is None:
             cell_types = []
 
@@ -97,10 +128,29 @@ class Register:
         self.total_domains = 0
 
     def add_cell(self, cell_name: str) -> None:
+        """Adds a cell to the right of the register.
+
+        :param cell_name: A string representing the cell type to be added
+        """
+        if cell_name not in self.cell_types.keys():
+            raise ValueError('Cell type does not exist')
+
         self.cells.append(cell_name)
         self.total_domains += len(self.cell_types[cell_name].domains)
 
     def get_cell_at_domain_index(self, domain_index: int) -> (Optional[str], int):
+        """Returns the name of the cell type at the given domain index, starting from index 0, as well as the numerical
+        offset relative to the beginning of the enclosing cell, starting at 0. For example, if a register has cells
+        of type A, B, C in that order, where each cell type has 3 domains, then domains 0-2 will return A, 3-5 will
+        return B, and 6-8 will return C. The domain at index 3 is the 0th domain in cell B, so an offset of 0 will be
+        returned.
+
+        :param domain_index: The integer index of the domain in the register.
+        :return: A tuple containing a string that represents the cell type name (or None if the domain index exceeds
+        the total domain length of the register), and the integer offset of that domain relative to the start index
+        of its enclosing cell (0 if the domain index exceeds the total domain length.)
+        """
+
         total_domains = 0
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
@@ -112,7 +162,19 @@ class Register:
 
     def get_coverings_at_domain_index(self, domain_index: int,
                                       include_orthogonal: bool = False,
-                                      strand_set=None):
+                                      strand_set: Optional[List[Dict]] = None) \
+            -> Union[Tuple[List[Dict], List[Dict]], List[Dict]]:
+        """Returns the DNA top strand(s) present at a given domain index.
+
+        :param domain_index: The integer index of the domain in the register.
+        :param include_orthogonal: A boolean specifying whether a separate list of DNA strands whose domains are
+        orthogonal at this domain index should be returned.
+        :param strand_set: A list of DNA top strands to be inspected. The register's coverings instance variable will
+        be used if None.
+        :return: The list of DNA top strands attached to the provided domain index, and the list of DNA top strands
+        with orthogonal domains hanging above the provided domain index if include_orthogonal is set to true
+        """
+
         coverings = []
         cell, offset = self.get_cell_at_domain_index(domain_index)
         if cell is None:
@@ -122,6 +184,7 @@ class Register:
         if include_orthogonal:
             orthogonal_coverings = []
 
+        # todo: write comment on how the algorithm works
         if strand_set is None:
             strand_set = self.coverings
         for covering in strand_set:
