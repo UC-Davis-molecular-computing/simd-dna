@@ -112,6 +112,14 @@ class Register:
     :param strand_types: A dictionary of :class:sim_dna.classes.Strand instances representing the possible strand types
     that can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
     strand name, to the actual :class:sim_dna.classes.Strand instance.
+
+    :ivar List[Dict] coverings: A list of DNA top strands present on the register. Each top strand is a Python
+    dictionary with the following key-value pairs:
+    |
+    | start_index: An integer representing the absolute start position of the strand's leftmost domain, with respect to
+    the domains in the register
+    | strand_name: A string that indicates the name of the strand type attached
+    :ivar int total_domains: The total number of domains in the register's bottom strand
     """
 
     def __init__(self, cell_types: Optional[Dict[str]] = None, strand_types: Optional[Dict[str]] = None) -> None:
