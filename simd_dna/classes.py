@@ -192,9 +192,15 @@ class Register:
         if include_orthogonal:
             orthogonal_coverings = []
 
-        # todo: write comment on how the algorithm works
         if strand_set is None:
             strand_set = self.coverings
+
+        # For every DNA top strand in strand_set, check if domain_index is within its index range
+        # from start_index to start_index + number of strand domains
+        # If it's within range, check if the domains of the bottom and top strand match, and add the strand to
+        # coverings if so
+        # If include_orthogonal is set to true, add the strand to orthogonal_coverings if the domains don't match
+        # todo: create a top strand covering data class?
         for covering in strand_set:
             start_index = covering['start_index']
             strand = self.strand_types[covering['strand_name']]
