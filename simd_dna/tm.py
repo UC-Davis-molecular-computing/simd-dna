@@ -217,83 +217,83 @@ def encode_register_data(register_name: str, transition_data, tm_data: Dict, sim
             if initial_configuration == configuration:
                 has_valid_initial_transition = True
             else:
-                simulation.registers[register_name].coverings.append({
+                simulation.registers[register_name].top_strands.append({
                     'start_index': current_index,
                     'strand_name': '({},{})_full'.format(*configuration)
                 })
 
             current_index += 2
         if has_valid_initial_transition:
-            simulation.registers[register_name].coverings.append({
+            simulation.registers[register_name].top_strands.append({
                 'start_index': current_index,
                 'strand_name': 'symbol_covered'
             })
         elif initial_symbol == tm_data['blank']:
-            insert_blank_symbol(simulation.registers[register_name].coverings, current_index)
+            insert_blank_symbol(simulation.registers[register_name].top_strands, current_index)
         elif initial_symbol == '0':
-            insert_zero_symbol(simulation.registers[register_name].coverings, current_index)
+            insert_zero_symbol(simulation.registers[register_name].top_strands, current_index)
         else:
-            insert_one_symbol(simulation.registers[register_name].coverings, current_index)
+            insert_one_symbol(simulation.registers[register_name].top_strands, current_index)
         current_index += 8
         for i in range(1, len(tm_data['input'])):
             symbol = tm_data['input'][i]
             simulation.registers[register_name].add_cell('Tape cell')
             for configuration in transition_data.keys():
-                simulation.registers[register_name].coverings.append({
+                simulation.registers[register_name].top_strands.append({
                     'start_index': current_index,
                     'strand_name': '({},{})_full'.format(*configuration)
                 })
                 current_index += 2
             if symbol == tm_data['blank']:
-                insert_blank_symbol(simulation.registers[register_name].coverings, current_index)
+                insert_blank_symbol(simulation.registers[register_name].top_strands, current_index)
             elif symbol == '0':
-                insert_zero_symbol(simulation.registers[register_name].coverings, current_index)
+                insert_zero_symbol(simulation.registers[register_name].top_strands, current_index)
             else:
-                insert_one_symbol(simulation.registers[register_name].coverings, current_index)
+                insert_one_symbol(simulation.registers[register_name].top_strands, current_index)
             current_index += 8
 
 
-def insert_blank_symbol(coverings, current_index):
-    coverings.append({
+def insert_blank_symbol(top_strands, current_index):
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_123'
     })
     current_index += 3
-    coverings.append({
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_456'
     })
     current_index += 3
-    coverings.append({
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_78'
     })
 
 
-def insert_zero_symbol(coverings, current_index):
-    coverings.append({
+def insert_zero_symbol(top_strands, current_index):
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_123'
     })
     current_index += 3
-    coverings.append({
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_45'
     })
     current_index += 2
-    coverings.append({
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_678'
     })
 
 
-def insert_one_symbol(coverings, current_index):
-    coverings.append({
+def insert_one_symbol(top_strands, current_index):
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_12'
     })
     current_index += 2
-    coverings.append({
+    top_strands.append({
         'start_index': current_index,
         'strand_name': 'symbol_345678'
     })
@@ -465,7 +465,7 @@ def create_left_instruction(index, num_configurations, transition, transition_da
         simulation.instructions.append(blank_instruction)
         generate_left_final_instruction_strands(next_index, num_configurations, configurations, simulation)
 
-    # Replace current cell coverings
+    # Replace current cell top strands
     if index > 0:
         simulation.instructions.append(['({},{})_left_extended_strip'.format(*configurations[index - 1])])
     else:
@@ -546,7 +546,7 @@ def create_right_instruction(index, num_configurations, transition, transition_d
 
     simulation.instructions.append(right_strip_instructions)
 
-    # Replace current cell coverings
+    # Replace current cell top strands
     replacement_instructions = []
     for current_configuration in configurations:
         replacement_instructions.append('({},{})_full'.format(*current_configuration))

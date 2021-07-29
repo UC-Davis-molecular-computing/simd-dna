@@ -43,7 +43,7 @@ class RegisterSVGDrawing:
 
     def draw_contents(self, register, label=None, draw_x=False):
         self._draw_register_outline(register, label, draw_x)
-        self.draw_strands(register, register.coverings, 1)
+        self.draw_strands(register, register.top_strands, 1)
         self._draw_cell_strand_labels(register)
 
     def increment_vertical_offset(self):
@@ -136,16 +136,16 @@ class RegisterSVGDrawing:
                         i + previous_domains) * self._domain_length
                 short_right = str(left + 3 * self._domain_length // 5) + "mm"
                 short_left = str(left + self._domain_length // 3) + "mm"
-                domain_coverings, orthogonal_coverings = register.get_coverings_at_domain_index(previous_domains + i,
-                                                                                                include_orthogonal=True,
-                                                                                                strand_set=strand_set)
-                strand = register.strand_types[domain_coverings[0]['strand_name']] if len(domain_coverings) > 0 else \
-                    register.strand_types[orthogonal_coverings[0]['strand_name']] if len(orthogonal_coverings) > 0 \
-                    else None
+                top_strands, orthogonal_top_strands = register.get_top_strands_at_domain_index(previous_domains + i,
+                                                                                               include_orthogonal=True,
+                                                                                               strand_set=strand_set)
+                strand = register.strand_types[top_strands[0]['strand_name']] if len(top_strands) > 0 else \
+                    register.strand_types[orthogonal_top_strands[0]['strand_name']] if len(orthogonal_top_strands) > 0 \
+                        else None
                 color = convert_hex_to_rgb('#000000') if strand is None \
                     else convert_hex_to_rgb(strand.color)
-                if len(orthogonal_coverings) >= 1 and crossover_start is None:
-                    orthogonal_strand = orthogonal_coverings[0]
+                if len(orthogonal_top_strands) >= 1 and crossover_start is None:
+                    orthogonal_strand = orthogonal_top_strands[0]
                     orthogonal_color = convert_hex_to_rgb(register.strand_types[orthogonal_strand['strand_name']].color)
                     point_right = orthogonal_strand['start_index'] != previous_domains + i
                     previous_left = self._current_size_parameters['left_offset'] + (
@@ -203,19 +203,19 @@ class RegisterSVGDrawing:
                                                          stroke_width="1mm",
                                                          stroke_dasharray=non_complementary_stroke_dasharray))
 
-                if len(domain_coverings) > 1 or crossover_start is not None:
+                if len(top_strands) > 1 or crossover_start is not None:
                     if crossover_start is None:
                         crossover_start = short_left
-                        crossover_strand = domain_coverings[1]['strand_name']
+                        crossover_strand = top_strands[1]['strand_name']
                         crossover_domain_count = 0
 
-                    next_coverings, orthogonal_coverings = register.get_coverings_at_domain_index(
+                    next_top_strands, orthogonal_top_strands = register.get_top_strands_at_domain_index(
                         previous_domains + i + 1,
                         include_orthogonal=True,
                         strand_set=strand_set)
                     crossover_domain_count += 1
 
-                    if len(next_coverings) + len(orthogonal_coverings) <= 1:
+                    if len(next_top_strands) + len(orthogonal_top_strands) <= 1:
                         first_color = register.strand_types[current_strand].color
                         second_color = register.strand_types[crossover_strand].color
                         left_diagonal_start = float(crossover_start[:-2]) - 0.5 + diagonal_strand_offset
@@ -246,11 +246,11 @@ class RegisterSVGDrawing:
                         current_strand = crossover_strand
                         crossover_start = None
                         crossover_strand = None
-                elif len(domain_coverings) == 1:
-                    index = previous_domains + i - domain_coverings[0]['start_index']
+                elif len(top_strands) == 1:
+                    index = previous_domains + i - top_strands[0]['start_index']
                     if current_start is None:
                         current_start = short_left
-                        current_strand = domain_coverings[0]['strand_name']
+                        current_strand = top_strands[0]['strand_name']
                         if strand.is_complementary and index == 0:
                             self._draw_left_arrow(float(current_start[:-2]), int(y[:-2]), color)
                     elif index == len(strand.domains) - 1:
@@ -266,14 +266,14 @@ class RegisterSVGDrawing:
             previous_domains += len(cell.domains)
 
         if len(strand_set) >= 1:
-            last_covering = strand_set[-1]
-            strand = register.strand_types[last_covering['strand_name']]
+            last_top_strand = strand_set[-1]
+            strand = register.strand_types[last_top_strand['strand_name']]
             color = convert_hex_to_rgb(strand.color)
             previous_left = self._current_size_parameters['left_offset'] + (
                     previous_domains - 1) * self._domain_length
             right = str(previous_left + 3 * self._domain_length // 5) + "mm"
             right_minus = str(float(right[:-2]) - 0.5) + "mm"
-            last_index = last_covering['start_index'] + len(strand.domains)
+            last_index = last_top_strand['start_index'] + len(strand.domains)
             last_right = str(float(right_minus[:-2]) + (last_index - previous_domains) * self._domain_length) + "mm"
             upper_y = str(float(y[:-2]) -
                           (last_index - previous_domains) * self._domain_length) + "mm"
@@ -324,15 +324,15 @@ class RegisterSVGDrawing:
                     if previous_domains + strand[0] < 0:
                         continue  # todo: handle negative indices
 
-                    domain_coverings, orthogonal_coverings \
-                        = register.get_coverings_at_domain_index(previous_domains + strand[0], True)
-                    domain_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
-                                                   domain_coverings))
-                    domain_coverings = [d['strand_name'] for d in domain_coverings]
-                    orthogonal_coverings = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
-                                                       orthogonal_coverings))
-                    orthogonal_coverings = [d['strand_name'] for d in orthogonal_coverings]
-                    if strand[1] not in domain_coverings and strand[1] not in orthogonal_coverings:
+                    top_strands, orthogonal_top_strands \
+                        = register.get_top_strands_at_domain_index(previous_domains + strand[0], True)
+                    top_strands = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
+                                              top_strands))
+                    top_strands = [d['strand_name'] for d in top_strands]
+                    orthogonal_top_strands = list(filter(lambda d: d['start_index'] == previous_domains + strand[0],
+                                                       orthogonal_top_strands))
+                    orthogonal_top_strands = [d['strand_name'] for d in orthogonal_top_strands]
+                    if strand[1] not in top_strands and strand[1] not in orthogonal_top_strands:
                         is_match[i] = False
                         break
 

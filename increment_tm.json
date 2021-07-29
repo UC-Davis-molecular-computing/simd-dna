@@ -1311,12 +1311,14 @@
                 "Tape cell",
                 "Tape cell",
                 "Tape cell",
+                "Tape cell",
+                "Tape cell",
                 "Tape cell"
             ],
-            "coverings": [
+            "top_strands": [
                 {
-                    "start_index": 2,
-                    "strand_name": "(a,1)_full"
+                    "start_index": 0,
+                    "strand_name": "(a,0)_full"
                 },
                 {
                     "start_index": 4,
@@ -1356,11 +1358,15 @@
                 },
                 {
                     "start_index": 28,
-                    "strand_name": "symbol_12"
+                    "strand_name": "symbol_123"
                 },
                 {
-                    "start_index": 30,
-                    "strand_name": "symbol_345678"
+                    "start_index": 31,
+                    "strand_name": "symbol_45"
+                },
+                {
+                    "start_index": 33,
+                    "strand_name": "symbol_678"
                 },
                 {
                     "start_index": 36,
@@ -1444,14 +1450,70 @@
                 },
                 {
                     "start_index": 82,
+                    "strand_name": "symbol_12"
+                },
+                {
+                    "start_index": 84,
+                    "strand_name": "symbol_345678"
+                },
+                {
+                    "start_index": 90,
+                    "strand_name": "(a,0)_full"
+                },
+                {
+                    "start_index": 92,
+                    "strand_name": "(a,1)_full"
+                },
+                {
+                    "start_index": 94,
+                    "strand_name": "(a, )_full"
+                },
+                {
+                    "start_index": 96,
+                    "strand_name": "(b,0)_full"
+                },
+                {
+                    "start_index": 98,
+                    "strand_name": "(b,1)_full"
+                },
+                {
+                    "start_index": 100,
+                    "strand_name": "symbol_12"
+                },
+                {
+                    "start_index": 102,
+                    "strand_name": "symbol_345678"
+                },
+                {
+                    "start_index": 108,
+                    "strand_name": "(a,0)_full"
+                },
+                {
+                    "start_index": 110,
+                    "strand_name": "(a,1)_full"
+                },
+                {
+                    "start_index": 112,
+                    "strand_name": "(a, )_full"
+                },
+                {
+                    "start_index": 114,
+                    "strand_name": "(b,0)_full"
+                },
+                {
+                    "start_index": 116,
+                    "strand_name": "(b,1)_full"
+                },
+                {
+                    "start_index": 118,
                     "strand_name": "symbol_123"
                 },
                 {
-                    "start_index": 85,
+                    "start_index": 121,
                     "strand_name": "symbol_456"
                 },
                 {
-                    "start_index": 88,
+                    "start_index": 124,
                     "strand_name": "symbol_78"
                 }
             ]

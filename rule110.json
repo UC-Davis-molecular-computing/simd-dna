@@ -121,7 +121,7 @@
                 "Bit",
                 "Bit"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 1,
                     "strand_name": "One"

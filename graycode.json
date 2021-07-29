@@ -7,7 +7,8 @@
                 "3",
                 "4",
                 "5"
-            ]
+            ],
+            "strand_labels": []
         },
         "Parity": {
             "domains": [
@@ -15,7 +16,8 @@
                 "7",
                 "8",
                 "9"
-            ]
+            ],
+            "strand_labels": []
         }
     },
     "strand_types": {
@@ -24,7 +26,8 @@
                 "1",
                 "2"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "One-second": {
             "domains": [
@@ -32,7 +35,8 @@
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "Zero-first": {
             "domains": [
@@ -40,28 +44,32 @@
                 "2",
                 "3"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "Zero-second": {
             "domains": [
                 "4",
                 "5"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "Even-indicator": {
             "domains": [
                 "8",
                 "9"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "Odd-indicator": {
             "domains": [
                 "6",
                 "7"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "1": {
             "domains": [
@@ -69,7 +77,8 @@
                 "7",
                 "10"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "2A": {
             "domains": [
@@ -80,7 +89,8 @@
                 "9",
                 "11"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "2B": {
             "domains": [
@@ -91,7 +101,8 @@
                 "4",
                 "11"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "3": {
             "domains": [
@@ -99,7 +110,8 @@
                 "4",
                 "5"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "4": {
             "domains": [
@@ -108,7 +120,8 @@
                 "4",
                 "11"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "5": {
             "domains": [
@@ -116,7 +129,8 @@
                 "7",
                 "10"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "6A": {
             "domains": [
@@ -126,7 +140,8 @@
                 "6",
                 "10"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "6B": {
             "domains": [
@@ -136,7 +151,8 @@
                 "1",
                 "10"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "7": {
             "domains": [
@@ -144,7 +160,8 @@
                 "2",
                 "3"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "8": {
             "domains": [
@@ -154,7 +171,8 @@
                 "5",
                 "12"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "9": {
             "domains": [
@@ -164,7 +182,8 @@
                 "5",
                 "12"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "10A": {
             "domains": [
@@ -173,7 +192,8 @@
                 "8",
                 "12"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "11": {
             "domains": [
@@ -183,7 +203,8 @@
                 "4",
                 "12"
             ],
-            "is_complementary": false
+            "is_complementary": false,
+            "color": "#000000"
         },
         "12A": {
             "domains": [
@@ -193,7 +214,8 @@
                 "6",
                 "10"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "12B": {
             "domains": [
@@ -203,7 +225,8 @@
                 "1",
                 "10"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "15A": {
             "domains": [
@@ -214,7 +237,8 @@
                 "9",
                 "11"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "15B": {
             "domains": [
@@ -225,7 +249,8 @@
                 "4",
                 "11"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "17": {
             "domains": [
@@ -235,7 +260,8 @@
                 "4",
                 "12"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         },
         "19": {
             "domains": [
@@ -244,7 +270,8 @@
                 "8",
                 "12"
             ],
-            "is_complementary": true
+            "is_complementary": true,
+            "color": "#000000"
         }
     },
     "registers": {
@@ -256,7 +283,7 @@
                 "Bit",
                 "Parity"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 0,
                     "strand_name": "Zero-first"
@@ -303,7 +330,7 @@
                 "Bit",
                 "Parity"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 0,
                     "strand_name": "Zero-first"
@@ -350,7 +377,7 @@
                 "Bit",
                 "Parity"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 0,
                     "strand_name": "Zero-first"
@@ -397,7 +424,7 @@
                 "Bit",
                 "Parity"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 0,
                     "strand_name": "One-first"

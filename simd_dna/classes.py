@@ -113,7 +113,7 @@ class Register:
     that can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
     strand name, to the actual :class:sim_dna.classes.Strand instance.
 
-    :ivar List[Dict] coverings: A list of DNA top strands present on the register. Each top strand is a Python
+    :ivar List[Dict] top_strands: A list of DNA top strands present on the register. Each top strand is a Python
     dictionary with the following key-value pairs:
     |
     | start_index: An integer representing the absolute start position of the strand's leftmost domain, with respect to
@@ -132,7 +132,7 @@ class Register:
         self.cell_types = cell_types
         self.strand_types = strand_types
         self.cells = []
-        self.coverings = []
+        self.top_strands = []
         self.total_domains = 0
 
     def add_cell(self, cell_name: str) -> None:
@@ -168,52 +168,52 @@ class Register:
 
         return None, 0
 
-    def get_coverings_at_domain_index(self, domain_index: int,
-                                      include_orthogonal: bool = False,
-                                      strand_set: Optional[List[Dict]] = None) \
+    def get_top_strands_at_domain_index(self, domain_index: int,
+                                        include_orthogonal: bool = False,
+                                        strand_set: Optional[List[Dict]] = None) \
             -> Union[Tuple[List[Dict], List[Dict]], List[Dict]]:
         """Returns the DNA top strand(s) present at a given domain index.
 
         :param domain_index: The integer index of the domain in the register.
         :param include_orthogonal: A boolean specifying whether a separate list of DNA strands whose domains are
         orthogonal at this domain index should be returned.
-        :param strand_set: A list of DNA top strands to be inspected. The register's coverings instance variable will
+        :param strand_set: A list of DNA top strands to be inspected. The register's top_strands instance variable will
         be used if None.
         :return: The list of DNA top strands attached to the provided domain index, and the list of DNA top strands
         with orthogonal domains hanging above the provided domain index if include_orthogonal is set to true
         """
 
-        coverings = []
+        top_strands = []
         cell, offset = self.get_cell_at_domain_index(domain_index)
         if cell is None:
-            return coverings
+            return top_strands
         domain_label = cell.domains[offset]
 
         if include_orthogonal:
-            orthogonal_coverings = []
+            orthogonal_top_strands = []
 
         if strand_set is None:
-            strand_set = self.coverings
+            strand_set = self.top_strands
 
         # For every DNA top strand in strand_set, check if domain_index is within its index range
         # from start_index to start_index + number of strand domains
         # If it's within range, check if the domains of the bottom and top strand match, and add the strand to
-        # coverings if so
-        # If include_orthogonal is set to true, add the strand to orthogonal_coverings if the domains don't match
-        # todo: create a top strand covering data class?
-        for covering in strand_set:
-            start_index = covering['start_index']
-            strand = self.strand_types[covering['strand_name']]
+        # top_strands if so
+        # If include_orthogonal is set to true, add the strand to orthogonal_top_strands if the domains don't match
+        # todo: create a top strand data class?
+        for top_strand in strand_set:
+            start_index = top_strand['start_index']
+            strand = self.strand_types[top_strand['strand_name']]
             if start_index <= domain_index < start_index + len(strand.domains):
                 if domain_label == strand.domains[domain_index - start_index]:
-                    coverings.append(covering)
+                    top_strands.append(top_strand)
                 elif include_orthogonal:
-                    orthogonal_coverings.append(covering)
+                    orthogonal_top_strands.append(top_strand)
 
         if include_orthogonal:
-            return coverings, orthogonal_coverings
+            return top_strands, orthogonal_top_strands
         else:
-            return coverings
+            return top_strands
 
     def attempt_attachment(self, domain_index, strand_type, unattached_matches=None):
         if domain_index < 0:
@@ -227,27 +227,27 @@ class Register:
         if strand.is_complementary:
             displaced_strands = []
             displacing_strands = []
-            for covering in self.coverings:
-                top_strand = self.strand_types[covering['strand_name']]
+            for top_strand in self.top_strands:
+                top_strand_domains = self.strand_types[top_strand['strand_name']].domains
                 is_match = True
-                for i in range(len(top_strand.domains)):
-                    if strand.domains[i] != top_strand.domains[i]:
+                for i in range(len(top_strand_domains)):
+                    if strand.domains[i] != top_strand_domains[i]:
                         is_match = False
                         break
 
                 if is_match:
-                    strand_start = covering['start_index']
-                    strand_end = strand_start + len(top_strand.domains)
+                    strand_start = top_strand['start_index']
+                    strand_end = strand_start + len(top_strand_domains)
                     for i in range(strand_start, strand_end):
-                        coverings_at_domain = self.get_coverings_at_domain_index(i)
+                        top_strands_at_domain = self.get_top_strands_at_domain_index(i)
                         # must have at least one insecure domain
-                        if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
-                            displaced_strands.append(covering)
+                        if len(top_strands_at_domain) > 1 or top_strand not in top_strands_at_domain:
+                            displaced_strands.append(top_strand)
                             displacing_strands.append({'start_index': strand_start, 'strand_name': strand_type})
                             break
 
             if len(displaced_strands) > 0:
-                self.coverings = [x for x in self.coverings if x not in displaced_strands]
+                self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
                 return displacing_strands
             elif unattached_matches is not None:
                 matchings = 0
@@ -264,8 +264,8 @@ class Register:
         else:
             has_open_toehold = False
             for i in range(len(strand.domains)):
-                coverings = self.get_coverings_at_domain_index(domain_index + i)
-                if len(coverings) == 0:
+                top_strands = self.get_top_strands_at_domain_index(domain_index + i)
+                if len(top_strands) == 0:
                     cell, offset = self.get_cell_at_domain_index(domain_index + i)
                     if cell is not None and cell.domains[offset] == strand.domains[i]:
                         has_open_toehold = True
@@ -279,38 +279,38 @@ class Register:
                         matchings += 1
 
                 if matchings >= 2:
-                    new_covering = {'start_index': domain_index, 'strand_name': strand_type}
+                    new_top_strand = {'start_index': domain_index, 'strand_name': strand_type}
                     if has_open_toehold:
-                        self.coverings.append(new_covering)
-                        self.coverings.sort(key=lambda x: x['start_index'])
-                        return [new_covering]
+                        self.top_strands.append(new_top_strand)
+                        self.top_strands.sort(key=lambda x: x['start_index'])
+                        return [new_top_strand]
                     else:
-                        if new_covering not in unattached_matches:
-                            unattached_matches.append(new_covering)
+                        if new_top_strand not in unattached_matches:
+                            unattached_matches.append(new_top_strand)
                             unattached_matches.sort(key=lambda x: x['start_index'])
                         return None
 
         return None
 
-    def displace_strands(self, coverings=[]):
+    def displace_strands(self, excluded_strands=[]):
         displaced_strands = []
-        coverings = [x for x in self.coverings if x not in coverings]
+        filtered_top_strands = [x for x in self.top_strands if x not in excluded_strands]
 
-        for covering in coverings:
-            strand_start = covering['start_index']
-            strand = self.strand_types[covering['strand_name']]
+        for top_strand in filtered_top_strands:
+            strand_start = top_strand['start_index']
+            strand = self.strand_types[top_strand['strand_name']]
             strand_end = strand_start + len(strand.domains)
             insecure_domains = 0
             for i in range(strand_start, strand_end):
-                coverings_at_domain = self.get_coverings_at_domain_index(i)
-                if len(coverings_at_domain) > 1 or covering not in coverings_at_domain:
+                top_strands_at_domain = self.get_top_strands_at_domain_index(i)
+                if len(top_strands_at_domain) > 1 or top_strand not in top_strands_at_domain:
                     insecure_domains += 1
 
             if insecure_domains >= strand_end - strand_start - 1:
-                displaced_strands.append(covering)
+                displaced_strands.append(top_strand)
 
         if len(displaced_strands) > 0:
-            self.coverings = [x for x in self.coverings if x not in displaced_strands]
+            self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
 
         return displaced_strands
 
@@ -330,12 +330,13 @@ class Register:
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
-                domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
-                                                                                            include_orthogonal=True)
-                if len(orthogonal_coverings) >= 1:
+                _, orthogonal_top_strands = \
+                    self.get_top_strands_at_domain_index(previous_domains + i,
+                                                         include_orthogonal=True)
+                if len(orthogonal_top_strands) >= 1:
                     point_right = True
-                    for covering in orthogonal_coverings:
-                        if covering['start_index'] == previous_domains + i:
+                    for top_strand in orthogonal_top_strands:
+                        if top_strand['start_index'] == previous_domains + i:
                             point_right = False
                             break
 
@@ -349,10 +350,10 @@ class Register:
             print('|', end='')
             previous_domains += len(cell.domains)
 
-        if len(self.coverings) >= 1:
-            last_covering = self.coverings[-1]
-            strand = self.strand_types[last_covering['strand_name']]
-            for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+        if len(self.top_strands) >= 1:
+            last_top_strand = self.top_strands[-1]
+            strand = self.strand_types[last_top_strand['strand_name']]
+            for _ in range(previous_domains, last_top_strand['start_index'] + len(strand.domains)):
                 print('/', end='')
 
         print()
@@ -362,12 +363,12 @@ class Register:
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
-                coverings = self.get_coverings_at_domain_index(previous_domains + i)
-                if len(coverings) == 0:
+                top_strands = self.get_top_strands_at_domain_index(previous_domains + i)
+                if len(top_strands) == 0:
                     print('□', end='')
-                elif len(coverings) == 1:
-                    strand = self.strand_types[coverings[0]['strand_name']]
-                    index = previous_domains + i - coverings[0]['start_index']
+                elif len(top_strands) == 1:
+                    strand = self.strand_types[top_strands[0]['strand_name']]
+                    index = previous_domains + i - top_strands[0]['start_index']
                     if index < len(strand.domains) - 1:
                         print('=', end='')
                     else:
@@ -386,14 +387,15 @@ class Register:
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
-                domain_coverings, orthogonal_coverings = self.get_coverings_at_domain_index(previous_domains + i,
-                                                                                            include_orthogonal=True,
-                                                                                            strand_set
-                                                                                            =strand_set)
-                if len(orthogonal_coverings) >= 1:
+                domain_top_strands, orthogonal_top_strands = self.get_top_strands_at_domain_index(previous_domains + i,
+                                                                                                  include_orthogonal
+                                                                                                  =True,
+                                                                                                  strand_set
+                                                                                                  =strand_set)
+                if len(orthogonal_top_strands) >= 1:
                     point_right = True
-                    for covering in orthogonal_coverings:
-                        if covering['start_index'] == previous_domains + i:
+                    for top_strand in orthogonal_top_strands:
+                        if top_strand['start_index'] == previous_domains + i:
                             point_right = False
                             break
 
@@ -408,9 +410,9 @@ class Register:
             previous_domains += len(cell.domains)
 
         if len(strand_set) >= 1:
-            last_covering = strand_set[-1]
-            strand = self.strand_types[last_covering['strand_name']]
-            for _ in range(previous_domains, last_covering['start_index'] + len(strand.domains)):
+            last_top_strand = strand_set[-1]
+            strand = self.strand_types[last_top_strand['strand_name']]
+            for _ in range(previous_domains, last_top_strand['start_index'] + len(strand.domains)):
                 print('/', end='')
 
         print()
@@ -420,12 +422,12 @@ class Register:
         for cell_name in self.cells:
             cell = self.cell_types[cell_name]
             for i in range(len(cell.domains)):
-                coverings = self.get_coverings_at_domain_index(previous_domains + i, strand_set=strand_set)
-                if len(coverings) == 0:
+                top_strands = self.get_top_strands_at_domain_index(previous_domains + i, strand_set=strand_set)
+                if len(top_strands) == 0:
                     print(' ', end='')
-                elif len(coverings) == 1:
-                    strand = self.strand_types[coverings[0]['strand_name']]
-                    index = previous_domains + i - coverings[0]['start_index']
+                elif len(top_strands) == 1:
+                    strand = self.strand_types[top_strands[0]['strand_name']]
+                    index = previous_domains + i - top_strands[0]['start_index']
                     if strand.is_complementary:
                         if index == 0:
                             print('<', end='')
@@ -496,14 +498,22 @@ class Register:
         return False
 
     @staticmethod
-    def decode_json(cell_types, strand_types, cells, coverings, **kwargs):
+    def decode_json(cell_types, strand_types, cells, **kwargs):
         self = Register(cell_types, strand_types)
         self.cells = cells
 
-        self.coverings = []
-        for covering in coverings:
-            self.coverings.append({'start_index': covering['start_index'],
-                                   'strand_name': covering['strand_name']})
+        # 'coverings' is old name of 'top_strands'
+        if 'coverings' in kwargs.keys():
+            top_strands = kwargs['coverings']
+        elif 'top_strands' in kwargs.keys():
+            top_strands = kwargs['top_strands']
+        else:
+            top_strands = []
+
+        self.top_strands = []
+        for top_strand in top_strands:
+            self.top_strands.append({'start_index': top_strand['start_index'],
+                                     'strand_name': top_strand['strand_name']})
 
         for cell in self.cells:
             self.total_domains += len(self.cell_types[cell].domains)

@@ -151,7 +151,7 @@
                 "Bit",
                 "Toehold"
             ],
-            "coverings": [
+            "top_strands": [
                 {
                     "start_index": 0,
                     "strand_name": "Zero-first"
