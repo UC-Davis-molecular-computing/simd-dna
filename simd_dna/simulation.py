@@ -90,7 +90,7 @@ class Simulation:
                 if unattached_matches is not None:
                     unattached_matches.extend(displaced_strands)
 
-        new_strands.sort(key=lambda x: x['start_index'])
+        new_strands.sort(key=lambda x: x.start_index)
         if unattached_matches is not None:
             unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
             unattached_matches = register.sanitize_unattached_strands(unattached_matches, new_strands)

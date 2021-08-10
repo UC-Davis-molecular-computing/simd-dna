@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from simd_dna.simulation import *
 from simd_dna.functions import convert_rgb_to_hex
+from simd_dna.classes import TopStrand
 
 import copy
 import re
@@ -217,17 +218,12 @@ def encode_register_data(register_name: str, transition_data, tm_data: Dict, sim
             if initial_configuration == configuration:
                 has_valid_initial_transition = True
             else:
-                simulation.registers[register_name].top_strands.append({
-                    'start_index': current_index,
-                    'strand_name': '({},{})_full'.format(*configuration)
-                })
+                simulation.registers[register_name].top_strands.append(TopStrand(current_index,
+                                                                                 '({},{})_full'.format(*configuration)))
 
             current_index += 2
         if has_valid_initial_transition:
-            simulation.registers[register_name].top_strands.append({
-                'start_index': current_index,
-                'strand_name': 'symbol_covered'
-            })
+            simulation.registers[register_name].top_strands.append(TopStrand(current_index, 'symbol_covered'))
         elif initial_symbol == tm_data['blank']:
             insert_blank_symbol(simulation.registers[register_name].top_strands, current_index)
         elif initial_symbol == '0':
@@ -239,10 +235,8 @@ def encode_register_data(register_name: str, transition_data, tm_data: Dict, sim
             symbol = tm_data['input'][i]
             simulation.registers[register_name].add_cell('Tape cell')
             for configuration in transition_data.keys():
-                simulation.registers[register_name].top_strands.append({
-                    'start_index': current_index,
-                    'strand_name': '({},{})_full'.format(*configuration)
-                })
+                simulation.registers[register_name].top_strands.append(TopStrand(current_index,
+                                                                                 '({},{})_full'.format(*configuration)))
                 current_index += 2
             if symbol == tm_data['blank']:
                 insert_blank_symbol(simulation.registers[register_name].top_strands, current_index)
@@ -254,49 +248,25 @@ def encode_register_data(register_name: str, transition_data, tm_data: Dict, sim
 
 
 def insert_blank_symbol(top_strands, current_index):
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_123'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_123'))
     current_index += 3
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_456'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_456'))
     current_index += 3
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_78'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_78'))
 
 
 def insert_zero_symbol(top_strands, current_index):
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_123'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_123'))
     current_index += 3
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_45'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_45'))
     current_index += 2
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_678'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_678'))
 
 
 def insert_one_symbol(top_strands, current_index):
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_12'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_12'))
     current_index += 2
-    top_strands.append({
-        'start_index': current_index,
-        'strand_name': 'symbol_345678'
-    })
+    top_strands.append(TopStrand(current_index, 'symbol_345678'))
 
 
 def generate_tm_instructions(transition_data, blank_symbol, simulation):

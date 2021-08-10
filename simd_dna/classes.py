@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Union, Tuple
 import re
 from json import JSONEncoder
@@ -37,6 +39,23 @@ class Strand:
         """
         self = Strand(domains, is_complementary, color)
         return self
+
+
+@dataclass
+class TopStrand:
+    """This is a representation of a top strand currently attached to a register.
+    |
+    |Attributes:
+    |start_index: The index of the strand's leftmost domain on the register, starting from the register's
+    leftmost domain at index 0
+    |strand_name: The name of the strand at start_index's location
+    """
+    start_index: int
+    strand_name: str
+
+    @staticmethod
+    def decode_json(start_index: int, strand_name: str, **kwargs) -> TopStrand:
+        return TopStrand(start_index, strand_name)
 
 
 class Cell:
@@ -170,8 +189,8 @@ class Register:
 
     def get_top_strands_at_domain_index(self, domain_index: int,
                                         include_orthogonal: bool = False,
-                                        strand_set: Optional[List[Dict]] = None) \
-            -> Union[Tuple[List[Dict], List[Dict]], List[Dict]]:
+                                        strand_set: Optional[List[TopStrand]] = None) \
+            -> Union[Tuple[List[TopStrand], List[TopStrand]], List[TopStrand]]:
         """Returns the DNA top strand(s) present at a given domain index.
 
         :param domain_index: The integer index of the domain in the register.
@@ -200,10 +219,9 @@ class Register:
         # If it's within range, check if the domains of the bottom and top strand match, and add the strand to
         # top_strands if so
         # If include_orthogonal is set to true, add the strand to orthogonal_top_strands if the domains don't match
-        # todo: create a top strand data class?
         for top_strand in strand_set:
-            start_index = top_strand['start_index']
-            strand = self.strand_types[top_strand['strand_name']]
+            start_index = top_strand.start_index
+            strand = self.strand_types[top_strand.strand_name]
             if start_index <= domain_index < start_index + len(strand.domains):
                 if domain_label == strand.domains[domain_index - start_index]:
                     top_strands.append(top_strand)
@@ -228,7 +246,7 @@ class Register:
             displaced_strands = []
             displacing_strands = []
             for top_strand in self.top_strands:
-                top_strand_domains = self.strand_types[top_strand['strand_name']].domains
+                top_strand_domains = self.strand_types[top_strand.strand_name].domains
                 is_match = True
                 for i in range(len(top_strand_domains)):
                     if strand.domains[i] != top_strand_domains[i]:
@@ -236,14 +254,14 @@ class Register:
                         break
 
                 if is_match:
-                    strand_start = top_strand['start_index']
+                    strand_start = top_strand.start_index
                     strand_end = strand_start + len(top_strand_domains)
                     for i in range(strand_start, strand_end):
                         top_strands_at_domain = self.get_top_strands_at_domain_index(i)
                         # must have at least one insecure domain
                         if len(top_strands_at_domain) > 1 or top_strand not in top_strands_at_domain:
                             displaced_strands.append(top_strand)
-                            displacing_strands.append({'start_index': strand_start, 'strand_name': strand_type})
+                            displacing_strands.append(TopStrand(strand_start, strand_type))
                             break
 
             if len(displaced_strands) > 0:
@@ -257,10 +275,10 @@ class Register:
                         matchings += 1
 
                 if matchings >= 1:
-                    new_strand = {'start_index': domain_index, 'strand_name': strand_type}
+                    new_strand = TopStrand(domain_index, strand_type)
                     if new_strand not in unattached_matches:
                         unattached_matches.append(new_strand)
-                        unattached_matches.sort(key=lambda x: x['start_index'])
+                        unattached_matches.sort(key=lambda x: x.start_index)
         else:
             has_open_toehold = False
             for i in range(len(strand.domains)):
@@ -279,15 +297,15 @@ class Register:
                         matchings += 1
 
                 if matchings >= 2:
-                    new_top_strand = {'start_index': domain_index, 'strand_name': strand_type}
+                    new_top_strand = TopStrand(domain_index, strand_type)
                     if has_open_toehold:
                         self.top_strands.append(new_top_strand)
-                        self.top_strands.sort(key=lambda x: x['start_index'])
+                        self.top_strands.sort(key=lambda x: x.start_index)
                         return [new_top_strand]
                     else:
                         if new_top_strand not in unattached_matches:
                             unattached_matches.append(new_top_strand)
-                            unattached_matches.sort(key=lambda x: x['start_index'])
+                            unattached_matches.sort(key=lambda x: x.start_index)
                         return None
 
         return None
@@ -297,8 +315,8 @@ class Register:
         filtered_top_strands = [x for x in self.top_strands if x not in excluded_strands]
 
         for top_strand in filtered_top_strands:
-            strand_start = top_strand['start_index']
-            strand = self.strand_types[top_strand['strand_name']]
+            strand_start = top_strand.start_index
+            strand = self.strand_types[top_strand.strand_name]
             strand_end = strand_start + len(strand.domains)
             insecure_domains = 0
             for i in range(strand_start, strand_end):
@@ -336,7 +354,7 @@ class Register:
                 if len(orthogonal_top_strands) >= 1:
                     point_right = True
                     for top_strand in orthogonal_top_strands:
-                        if top_strand['start_index'] == previous_domains + i:
+                        if top_strand.start_index == previous_domains + i:
                             point_right = False
                             break
 
@@ -352,8 +370,8 @@ class Register:
 
         if len(self.top_strands) >= 1:
             last_top_strand = self.top_strands[-1]
-            strand = self.strand_types[last_top_strand['strand_name']]
-            for _ in range(previous_domains, last_top_strand['start_index'] + len(strand.domains)):
+            strand = self.strand_types[last_top_strand.strand_name]
+            for _ in range(previous_domains, last_top_strand.start_index + len(strand.domains)):
                 print('/', end='')
 
         print()
@@ -367,8 +385,9 @@ class Register:
                 if len(top_strands) == 0:
                     print('□', end='')
                 elif len(top_strands) == 1:
-                    strand = self.strand_types[top_strands[0]['strand_name']]
-                    index = previous_domains + i - top_strands[0]['start_index']
+                    top_strand = top_strands[0]
+                    strand = self.strand_types[top_strand.strand_name]
+                    index = previous_domains + i - top_strand.start_index
                     if index < len(strand.domains) - 1:
                         print('=', end='')
                     else:
@@ -395,7 +414,7 @@ class Register:
                 if len(orthogonal_top_strands) >= 1:
                     point_right = True
                     for top_strand in orthogonal_top_strands:
-                        if top_strand['start_index'] == previous_domains + i:
+                        if top_strand.start_index == previous_domains + i:
                             point_right = False
                             break
 
@@ -411,8 +430,8 @@ class Register:
 
         if len(strand_set) >= 1:
             last_top_strand = strand_set[-1]
-            strand = self.strand_types[last_top_strand['strand_name']]
-            for _ in range(previous_domains, last_top_strand['start_index'] + len(strand.domains)):
+            strand = self.strand_types[last_top_strand.strand_name]
+            for _ in range(previous_domains, last_top_strand.start_index + len(strand.domains)):
                 print('/', end='')
 
         print()
@@ -426,8 +445,9 @@ class Register:
                 if len(top_strands) == 0:
                     print(' ', end='')
                 elif len(top_strands) == 1:
-                    strand = self.strand_types[top_strands[0]['strand_name']]
-                    index = previous_domains + i - top_strands[0]['start_index']
+                    top_strand = top_strands[0]
+                    strand = self.strand_types[top_strand.strand_name]
+                    index = previous_domains + i - top_strand.start_index
                     if strand.is_complementary:
                         if index == 0:
                             print('<', end='')
@@ -477,19 +497,19 @@ class Register:
             if add_strand:
                 sanitized_strands.append(strand)
 
-        sanitized_strands.sort(key=lambda x: x['start_index'])
+        sanitized_strands.sort(key=lambda x: x.start_index)
         return sanitized_strands
 
     def strands_intersect(self, strand_1, strand_2):
-        if strand_1['start_index'] > strand_2['start_index']:
+        if strand_1.start_index > strand_2.start_index:
             temp = strand_2
             strand_2 = strand_1
             strand_1 = temp
 
-        start_1 = strand_1['start_index']
-        start_2 = strand_2['start_index']
-        domains_1 = self.strand_types[strand_1['strand_name']].domains
-        domains_2 = self.strand_types[strand_2['strand_name']].domains
+        start_1 = strand_1.start_index
+        start_2 = strand_2.start_index
+        domains_1 = self.strand_types[strand_1.strand_name].domains
+        domains_2 = self.strand_types[strand_2.strand_name].domains
         diff = start_2 - start_1
         for i in range(diff, len(domains_1)):
             if domains_1[i] == domains_2[i - diff]:
@@ -512,8 +532,9 @@ class Register:
 
         self.top_strands = []
         for top_strand in top_strands:
-            self.top_strands.append({'start_index': top_strand['start_index'],
-                                     'strand_name': top_strand['strand_name']})
+            self.top_strands.append(TopStrand.decode_json(**top_strand))
+
+        self.top_strands.sort(key=lambda x: x.start_index)
 
         for cell in self.cells:
             self.total_domains += len(self.cell_types[cell].domains)
