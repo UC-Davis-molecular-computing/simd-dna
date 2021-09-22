@@ -28,14 +28,14 @@ class Strand:
 
     @staticmethod
     def decode_json(domains: List[str], is_complementary: bool, color: str = '#000000', **kwargs) -> Strand:
-        """Decodes a JSON object and returns an instance of :class:sim_dna.classes.Strand
+        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Strand
 
         :param domains: A list of strings corresponding to the domains field
         :param is_complementary: A boolean corresponding to the is_complementary field
         :param color:  A string corresponding to the color field
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:sim_dna.classes.Strand object
+        :return: A :class:simd_dna.classes.Strand object
         """
         self = Strand(domains, is_complementary, color)
         return self
@@ -89,13 +89,13 @@ class Cell:
 
     @staticmethod
     def decode_json(domains: List[str], strand_labels: Optional[List[Dict]] = None, **kwargs) -> Cell:
-        """Decodes a JSON object and returns an instance of :class:sim_dna.classes.Cell .
+        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Cell .
 
         :param domains: A list of strings corresponding to the domains field
         :param strand_labels: A list of dictionaries corresponding to the strand_labels field
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:sim_dna.classes.Cell object
+        :return: A :class:simd_dna.classes.Cell object
         """
         if strand_labels is None:
             strand_labels = []
@@ -104,7 +104,7 @@ class Cell:
         return self
 
     def add_strand_label(self, coordinate_strand_pairs: List, string_label: str) -> None:
-        """Adds a new strand label to the cell type. See :class:sim_dna.classes.Cell for a detailed breakdown of the
+        """Adds a new strand label to the cell type. See :class:simd_dna.classes.Cell for a detailed breakdown of the
         strand label's data structure.
 
         :param coordinate_strand_pairs: A 2D list, where the first index is an integer that represents the start index
@@ -125,12 +125,12 @@ class Register:
     register, where the top strands are altered through DNA strand displacement. Waste products are washed away before
     the next instruction strands are applied.
 
-    :param cell_types: A dictionary of :class:sim_dna.classes.Cell instances representing the possible cell types that
-    can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
-    cell name, to the actual :class:sim_dna.classes.Cell instance.
-    :param strand_types: A dictionary of :class:sim_dna.classes.Strand instances representing the possible strand types
-    that can be part of this :class:sim_dna.classes.Register instance. The dictionary maps strings, which represent the
-    strand name, to the actual :class:sim_dna.classes.Strand instance.
+    :param cell_types: A dictionary of :class:simd_dna.classes.Cell instances representing the possible cell types that
+    can be part of this :class:simd_dna.classes.Register instance. The dictionary maps strings, which represent the
+    cell name, to the actual :class:simd_dna.classes.Cell instance.
+    :param strand_types: A dictionary of :class:simd_dna.classes.Strand instances representing the possible strand types
+    that can be part of this :class:simd_dna.classes.Register instance. The dictionary maps strings, which represent the
+    strand name, to the actual :class:simd_dna.classes.Strand instance.
 
     :ivar List[Dict] top_strands: A list of DNA top strands present on the register. Each top strand is a Python
     dictionary with the following key-value pairs:
@@ -233,7 +233,24 @@ class Register:
         else:
             return top_strands
 
-    def attempt_attachment(self, domain_index, strand_type, unattached_matches=None):
+    def attempt_attachment(self, domain_index: int,
+                           strand_type: str,
+                           unattached_matches: Optional[List[TopStrand]] = None) -> Optional[List[TopStrand]]:
+        """
+        :param domain_index: The integer index of the register domain that the leftmost domain of strand_type will
+        attempt to attach to (e.g. attach strand one_first starting at domain index 56)
+        :param strand_type: The name of the :class:simd_dna.classes.Strand that will be attached. The name must be one
+        of the keys in the Register's strand_types instance variable
+        :param unattached_matches: A list of :class:simd_dna.classes.TopStrand instances that complement the domains
+        underneath, but are inert because no open toeholds are available. If the current strand to be attached matches
+        but is inert, it will be added to this list. If the caller isn't interested in getting the location of inert
+        instruction strands, None can be provided.
+        :return: A list containing :class:simd_dna.classes.TopStrand instances of new strands if attachment was
+        successful, or None if no strands attached
+        """
+        if strand_type not in self.strand_types.keys():
+            raise ValueError('Strand type does not exist')
+
         if domain_index < 0:
             total_domains = 0
             for cell_name in self.cells:
