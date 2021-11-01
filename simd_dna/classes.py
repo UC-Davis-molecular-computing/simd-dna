@@ -236,9 +236,13 @@ class Register:
     def attempt_attachment(self, domain_index: int,
                            strand_type: str,
                            unattached_matches: Optional[List[TopStrand]] = None) -> Optional[List[TopStrand]]:
-        """
+        """Attempts to attach a copy of strand_type, with its leftmost domain placed on top of the specified
+        domain_index if it's complementary to the bottom strand (strand_type.is_complementary is False.) If
+        complementary to the top strand, detaches all top strands that bind to strand_type from the register.
+
         :param domain_index: The integer index of the register domain that the leftmost domain of strand_type will
-        attempt to attach to (e.g. attach strand one_first starting at domain index 56)
+        attempt to attach to (e.g. attach strand 'one_first' starting at domain index 56.) If strand_type is
+        complementary to the top strand, this parameter is ignored.
         :param strand_type: The name of the :class:simd_dna.classes.Strand that will be attached. The name must be one
         of the keys in the Register's strand_types instance variable
         :param unattached_matches: A list of :class:simd_dna.classes.TopStrand instances that complement the domains
@@ -251,6 +255,7 @@ class Register:
         if strand_type not in self.strand_types.keys():
             raise ValueError('Strand type does not exist')
 
+        # Allow negative indexing
         if domain_index < 0:
             total_domains = 0
             for cell_name in self.cells:
@@ -260,6 +265,10 @@ class Register:
         strand = self.strand_types[strand_type]
 
         if strand.is_complementary:
+            # If strand_type is complementary to the top strand, store all the strands that top_strand removes in
+            # displaced_strands, and store TopStrand instances in displacing_strands, which note the domain indices
+            # where strand_type successfully binds to the top strand
+
             displaced_strands = []
             displacing_strands = []
             for top_strand in self.top_strands:
@@ -285,6 +294,10 @@ class Register:
                 self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
                 return displacing_strands
             elif unattached_matches is not None:
+                # If the caller provides an unattached_matches list and the strand doesn't successfully bind at
+                # domain_index, check if strand_type matches at least one domain. If so, it's considered inert and
+                # is added to the list if not already present.
+
                 matchings = 0
                 for i in range(len(strand.domains)):
                     cell, offset = self.get_cell_at_domain_index(domain_index + i)
@@ -297,6 +310,12 @@ class Register:
                         unattached_matches.append(new_strand)
                         unattached_matches.sort(key=lambda x: x.start_index)
         else:
+            # If strand_type is complementary to the bottom strand, check if an open toehold is present when the strand
+            # is placed according to domain_index. If so, check if the strand matches at least two domains along the
+            # bottom strand, and return a list containing a new TopStrand instance if so. If no open toeholds are
+            # present, but the caller provides an unattached_matches list and there are at least two domain matches,
+            # the strand is considered inert and is added to the list if not already present.
+
             has_open_toehold = False
             for i in range(len(strand.domains)):
                 top_strands = self.get_top_strands_at_domain_index(domain_index + i)
@@ -304,6 +323,7 @@ class Register:
                     cell, offset = self.get_cell_at_domain_index(domain_index + i)
                     if cell is not None and cell.domains[offset] == strand.domains[i]:
                         has_open_toehold = True
+                        break
 
             if has_open_toehold or unattached_matches is not None:
                 # must have at least two matching domains to attach
