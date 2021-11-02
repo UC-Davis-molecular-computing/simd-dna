@@ -347,7 +347,17 @@ class Register:
 
         return None
 
-    def displace_strands(self, excluded_strands=[]):
+    def displace_strands(self, excluded_strands: Optional[List[TopStrand]] = None) -> List[TopStrand]:
+        """Simulates DNA strand displacement on the register, initiated by the new strands introduced by
+        :func:simd_dna.classes.Register.attempt_attachment . By first attaching all possible new strands before
+        displacing existing strands on the register, cooperative strand displacement can be simulated.
+
+        :param excluded_strands: A list of TopStrands that should be exempt from displacement
+        :return: A list of TopStrands that were displaced
+        """
+        if excluded_strands is None:
+            excluded_strands = []
+
         displaced_strands = []
         filtered_top_strands = [x for x in self.top_strands if x not in excluded_strands]
 
@@ -356,11 +366,13 @@ class Register:
             strand = self.strand_types[top_strand.strand_name]
             strand_end = strand_start + len(strand.domains)
             insecure_domains = 0
+            # count the number of domains in this strand that are contested by other strands, or orthogonal
             for i in range(strand_start, strand_end):
                 top_strands_at_domain = self.get_top_strands_at_domain_index(i)
                 if len(top_strands_at_domain) > 1 or top_strand not in top_strands_at_domain:
                     insecure_domains += 1
 
+            # if the strand is bound to the register by 0 or 1 uncontested domains, it is displaced
             if insecure_domains >= strand_end - strand_start - 1:
                 displaced_strands.append(top_strand)
 
