@@ -33,7 +33,7 @@ class Simulation:
                 offset = covering[1]
                 current_register.attempt_attachment(-cell_size + offset, strand_type)
 
-    def add_strand_type(self, name, domains, is_complementary=False, color='#000000'):
+    def add_strand_type(self, name: str, domains, is_complementary: bool = False, color: str = '#000000'):
         self.strand_types[name] = Strand(domains, is_complementary, color)
 
     def add_instruction(self, instruction_strands):
@@ -42,7 +42,7 @@ class Simulation:
     def add_cell_strand_label(self, cell_name, coordinate_strand_pairs, string_label):
         self.cell_types[cell_name].add_strand_label(coordinate_strand_pairs, string_label)
 
-    def run_instruction(self, register_name, inst_num):
+    def run_instruction(self, register_name: str, inst_num: int):
         if register_name not in self.registers.keys():
             raise ValueError('No such register exists')
 

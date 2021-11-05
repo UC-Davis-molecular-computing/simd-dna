@@ -55,6 +55,14 @@ class TopStrand:
 
     @staticmethod
     def decode_json(start_index: int, strand_name: str, **kwargs) -> TopStrand:
+        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.TopStrand
+
+            :param start_index: An integer representing the register position of the top strand's leftmost domain
+            :param strand_name: A string representing the name/type of the top strand
+            :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
+            JSON object. Any excess data is ignored.
+            :return: A :class:simd_dna.classes.TopStrand object
+            """
         return TopStrand(start_index, strand_name)
 
 
@@ -381,7 +389,16 @@ class Register:
 
         return displaced_strands
 
-    def print(self, new_strands=None, unused_strands=None):
+    def print(self, new_strands: Optional[List[TopStrand]] = None,
+              unused_strands: Optional[List[TopStrand]] = None) -> None:
+        """Prints the register's current contents on the console.
+
+        :param new_strands: A list of top strands that will displace the current strands, which will be printed one
+        level above the current strands on the register.
+        :param unused_strands: A list of top strands that would've attached to the register but are inert, which will be
+        printed two levels above the current strands on the register.
+        :return:
+        """
         if unused_strands is not None and len(unused_strands) > 0:
             self._print_floating_strands(unused_strands)
 

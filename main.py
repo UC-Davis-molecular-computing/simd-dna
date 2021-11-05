@@ -221,9 +221,9 @@ def simd_simulator(args):
                        '''9 - ''' + (
                            'Don\'t keep results after simulation\n' if local_simulation.keep_results
                            else 'Keep results after simulation\n') +
-                       '''10 - ''' + ('Don\'t show unused instruction strands\n'
+                       '''10 - ''' + ('Don\'t show inert instruction strands\n'
                                       if local_simulation.show_unused_instruction_strands
-                                      else 'Show unused instruction strands\n') +
+                                      else 'Show inert instruction strands\n') +
                        '''11 - ''' + ('Don\'t compress SVG drawings\n' if compress_svg_drawings
                                       else 'Compress SVG drawings\n') +
                        '''12 - Convert turingmachine.io Turing machine to SIMD register
