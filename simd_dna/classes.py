@@ -466,7 +466,9 @@ class Register:
 
         print()
 
-    def _print_floating_strands(self, strand_set):
+    def _print_floating_strands(self, strand_set: List[TopStrand]) -> None:
+        # Helper function for print(), which prints strands that are a few layers above the register's bottom strand.
+        # In the convention we use, these strands
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
@@ -532,7 +534,8 @@ class Register:
 
         print()
 
-    def _print_empty_layer(self, blank_char=' '):
+    def _print_empty_layer(self, blank_char: str = ' ') -> None:
+        # Helper function for print(), printing only the vertical lines that separate each cell in the register
         previous_domains = 0
         print('|', end='')
         for cell_name in self.cells:
@@ -566,7 +569,14 @@ class Register:
         sanitized_strands.sort(key=lambda x: x.start_index)
         return sanitized_strands
 
-    def strands_intersect(self, strand_1, strand_2):
+    def strands_intersect(self, strand_1: TopStrand, strand_2: TopStrand) -> bool:
+        """Checks if two strands occupy the same domain location(s), where their domain segments at that location are
+        complementary to the bottom strand. The two strands compete over that domain(s) if so.
+
+        :param strand_1: The first TopStrand to compare
+        :param strand_2: The second TopStrand to compare
+        :return: True if the strands intersect, False otherwise
+        """
         if strand_1.start_index > strand_2.start_index:
             temp = strand_2
             strand_2 = strand_1
