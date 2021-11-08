@@ -58,9 +58,9 @@ class Simulation:
             total_domains += len(self.cell_types[cell_name].domains)
 
         if self.show_unused_instruction_strands:
-            unattached_matches = []
+            inert_matches = []
         else:
-            unattached_matches = None
+            inert_matches = None
 
         inst = self.instructions[inst_num]
         new_strands = []
@@ -70,7 +70,7 @@ class Simulation:
                 new_attachments = []
                 for strand_name in inst:
                     for i in range(total_domains):
-                        new_attachment = register.attempt_attachment(i, strand_name, unattached_matches)
+                        new_attachment = register.attempt_attachment(i, strand_name, inert_matches)
                         if new_attachment is not None:
                             new_attachments.extend(new_attachment)
 
@@ -87,12 +87,12 @@ class Simulation:
                     new_strands.extend(
                         [strand for strand in new_attachments if strand not in displaced_strands])
 
-                if unattached_matches is not None:
-                    unattached_matches.extend(displaced_strands)
+                if inert_matches is not None:
+                    inert_matches.extend(displaced_strands)
 
         new_strands.sort(key=lambda x: x.start_index)
-        if unattached_matches is not None:
-            unattached_matches = [strand for strand in unattached_matches if strand not in new_strands]
-            unattached_matches = register.sanitize_unattached_strands(unattached_matches, new_strands)
+        if inert_matches is not None:
+            inert_matches = [strand for strand in inert_matches if strand not in new_strands]
+            inert_matches = register.sanitize_inert_strands(inert_matches, new_strands)
 
-        return register, before_register, new_strands, unattached_matches
+        return register, before_register, new_strands, inert_matches

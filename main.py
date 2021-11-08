@@ -87,22 +87,22 @@ def run_simulation():
 
         for inst_num in range(len(local_simulation.instructions)):
             label = ("" if svg_drawing.compress_svg_drawings else "Instruction ") + str(inst_num + 1)
-            register, before_register, new_strands, unattached_matches = local_simulation.run_instruction(register_key,
+            register, before_register, new_strands, inert_matches = local_simulation.run_instruction(register_key,
                                                                                                           inst_num)
 
             print("Instruction", inst_num + 1)
 
             if (len(new_strands) == 0 and (
-                    unattached_matches is None or len(unattached_matches) == 0)) and inst_num > 0:
+                    inert_matches is None or len(inert_matches) == 0)) and inst_num > 0:
                 print('No changes\n')
             else:
-                before_register.print(new_strands, unattached_matches)
+                before_register.print(new_strands, inert_matches)
                 print()
 
             if draw_inert_instructions_svg or len(new_strands) > 0:
                 svg_drawing.draw_contents(before_register, label, len(new_strands) == 0)
                 svg_drawing.draw_strands(register, new_strands, 3)
-                svg_drawing.draw_strands(register, unattached_matches,
+                svg_drawing.draw_strands(register, inert_matches,
                                          3 if svg_drawing.compress_svg_drawings else 6, True)
                 svg_drawing.increment_vertical_offset()
 

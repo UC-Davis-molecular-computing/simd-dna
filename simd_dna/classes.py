@@ -548,9 +548,19 @@ class Register:
 
         print()
 
-    def sanitize_unattached_strands(self, unattached_strands, new_strands):
+    def sanitize_inert_strands(self, inert_strands: List[TopStrand],
+                               new_strands: List[TopStrand]) -> List[TopStrand]:
+        """Removes inert strands that overlap with other inert strands or newly attached strands. Two strands are said
+        to overlap if the have complementary domains in common on the register. This is done to reduce the cluttering
+        in the visual representation of the register, in case the user chooses to print the register on the console or
+        display its contents through an SVG representation.
+
+        :param inert_strands: A list of inert TopStrands after applying an instruction
+        :param new_strands: A list of newly attached TopStrands after applying an instruction
+        :return: A list of inert TopStrands after overlapping strands are removed
+        """
         sanitized_strands = []
-        for strand in reversed(unattached_strands):
+        for strand in reversed(inert_strands):
             add_strand = True
             for new_strand in new_strands:
                 if self.strands_intersect(strand, new_strand):
@@ -564,9 +574,8 @@ class Register:
                         break
 
             if add_strand:
-                sanitized_strands.append(strand)
+                sanitized_strands.insert(0, strand)
 
-        sanitized_strands.sort(key=lambda x: x.start_index)
         return sanitized_strands
 
     def strands_intersect(self, strand_1: TopStrand, strand_2: TopStrand) -> bool:
