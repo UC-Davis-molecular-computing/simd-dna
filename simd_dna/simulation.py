@@ -1,11 +1,13 @@
 import copy
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from simd_dna.classes import *
 
 
 class Simulation:
 
-    def __init__(self, step_by_step_simulation=False, keep_results=False, show_unused_instruction_strands=False):
+    def __init__(self, step_by_step_simulation: bool = False,
+                 keep_results: bool = False,
+                 show_unused_instruction_strands: bool = False) -> None:
         self.strand_types = {}
         self.cell_types = {}
         self.registers = {}
@@ -14,13 +16,16 @@ class Simulation:
         self.keep_results = keep_results
         self.show_unused_instruction_strands = show_unused_instruction_strands
 
-    def add_cell_type(self, name, domains):
+    def add_cell_type(self, name: str, domains: List[str]) -> None:
         if name not in self.cell_types.keys():
             self.cell_types[name] = Cell(domains)
 
-    def add_cells_to_register(self, register_name, cell_name, coverings: Optional[List] = None, copies=1) -> None:
-        if coverings is None:
-            coverings = []
+    def add_cells_to_register(self, register_name: str,
+                              cell_name: str,
+                              top_strands: Optional[List[TopStrand]] = None,
+                              copies: int = 1) -> None:
+        if top_strands is None:
+            top_strands = []
         if register_name not in self.registers:
             self.registers[register_name] = Register(self.cell_types, self.strand_types)
 
@@ -28,21 +33,23 @@ class Simulation:
         cell_size = len(self.cell_types[cell_name].domains)
         for _ in range(copies):
             current_register.add_cell(cell_name)
-            for covering in coverings:
-                strand_type = covering[0]
-                offset = covering[1]
+            for top_strand in top_strands:
+                strand_type = top_strand[0]
+                offset = top_strand[1]
                 current_register.attempt_attachment(-cell_size + offset, strand_type)
 
-    def add_strand_type(self, name: str, domains, is_complementary: bool = False, color: str = '#000000'):
+    def add_strand_type(self, name: str, domains: List[str],
+                        is_complementary: bool = False, color: str = '#000000') -> None:
         self.strand_types[name] = Strand(domains, is_complementary, color)
 
-    def add_instruction(self, instruction_strands):
+    def add_instruction(self, instruction_strands: List[str]) -> None:
         self.instructions.append(instruction_strands)
 
-    def add_cell_strand_label(self, cell_name, coordinate_strand_pairs, string_label):
+    def add_cell_strand_label(self, cell_name: str, coordinate_strand_pairs: List[List], string_label: str) -> None:
         self.cell_types[cell_name].add_strand_label(coordinate_strand_pairs, string_label)
 
-    def run_instruction(self, register_name: str, inst_num: int):
+    def run_instruction(self, register_name: str,
+                        inst_num: int) -> Tuple[Register, Register, List[TopStrand], Optional[List[TopStrand]]]:
         if register_name not in self.registers.keys():
             raise ValueError('No such register exists')
 
