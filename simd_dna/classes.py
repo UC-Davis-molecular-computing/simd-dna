@@ -57,12 +57,12 @@ class TopStrand:
     def decode_json(start_index: int, strand_name: str, **kwargs) -> TopStrand:
         """Decodes a JSON object and returns an instance of :class:simd_dna.classes.TopStrand
 
-            :param start_index: An integer representing the register position of the top strand's leftmost domain
-            :param strand_name: A string representing the name/type of the top strand
-            :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
-            JSON object. Any excess data is ignored.
-            :return: A :class:simd_dna.classes.TopStrand object
-            """
+        :param start_index: An integer representing the register position of the top strand's leftmost domain
+        :param strand_name: A string representing the name/type of the top strand
+        :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
+        JSON object. Any excess data is ignored.
+        :return: A :class:simd_dna.classes.TopStrand object
+        """
         return TopStrand(start_index, strand_name)
 
 
@@ -603,7 +603,18 @@ class Register:
         return False
 
     @staticmethod
-    def decode_json(cell_types, strand_types, cells, **kwargs):
+    def decode_json(cell_types: List[Cell], strand_types: List[Strand], cells, **kwargs) -> Register:
+        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Register
+
+        :param cell_types: A list of :class:simd_dna.classes.Cell types that can be present on this register
+        :param strand_types: A list of :class:simd_dna.classes.Strand types that can be present on this register
+        :param cells: A string list of cell names that compose this Register instance, going from left to right as the
+        list index increases
+        :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
+        JSON object. Any excess data is ignored.
+        :return: A :class:simd_dna.classes.Register object
+        """
+
         self = Register(cell_types, strand_types)
         self.cells = cells
 
@@ -628,5 +639,8 @@ class Register:
 
 
 class ObjectEncoder(JSONEncoder):
+    """
+    A JSONEncoder subclass that allows the json.dump() function to get the dictionary encoding of an object
+    """
     def default(self, o):
         return o.__dict__
