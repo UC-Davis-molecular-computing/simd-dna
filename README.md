@@ -1,6 +1,8 @@
 # simd-dna
 A Python simulator for the SIMD||DNA model of computation, as defined in https://doi.org/10.1007/978-3-030-26807-7_12 (preprint: http://users.ece.utexas.edu/~soloveichik/papers/simd-dna.pdf)
 
+Code documentation can be found at https://simd-dna.readthedocs.io/en/latest/
+
 # Setup
 1. Install PyCharm: https://www.jetbrains.com/pycharm/
 2. In the Welcome screen, select Open (if using PyCharm for the first time) or go to File > Open (if using PyCharm with a pre-existing project loaded) and open the root directory of the repository.
