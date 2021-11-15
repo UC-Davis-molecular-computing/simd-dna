@@ -73,12 +73,14 @@ class Cell:
     :param domains: A list of strings representing the domains of the cell in left to right order
     :param strand_labels: A list of dictionaries that map strand patterns to string labels. A string label will be
         written underneath the cell in the SVG drawing if the strand pattern matches. Each dictionary has the following
-        key-value pairs:\n\n
+        key-value pairs:\n
+        \n
         strands: A 2D list, where the first index is an integer that represents the start index of a strand relative to
         the first domain of the cell, starting at 0. The second index is the string name of the strand type that should
         be present at that index for the pattern to match.\n
         label: A string that will be printed underneath the cell in the SVG if the strand pattern in 'strands' matches
-        the cell's current contents.\n\n
+        the cell's current contents.\n
+        \n
         One example is the following dictionary:\n
         {'strands': [[0, 'Zero-first'], [3, 'Zero-second']], 'label': '0'}\n
         This means that if a strand of type 'Zero-first' has its leftmost domain attached to domain 0 of the cell, and
