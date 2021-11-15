@@ -28,14 +28,14 @@ class Strand:
 
     @staticmethod
     def decode_json(domains: List[str], is_complementary: bool, color: str = '#000000', **kwargs) -> Strand:
-        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Strand
+        """Decodes a JSON object and returns an instance of :class:`simd_dna.classes.Strand`
 
         :param domains: A list of strings corresponding to the domains field
         :param is_complementary: A boolean corresponding to the is_complementary field
         :param color:  A string corresponding to the color field
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:simd_dna.classes.Strand object
+        :return: A :class:`simd_dna.classes.Strand` object
         """
         self = Strand(domains, is_complementary, color)
         return self
@@ -61,7 +61,7 @@ class TopStrand:
         :param strand_name: A string representing the name/type of the top strand
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:simd_dna.classes.TopStrand object
+        :return: A :class:`simd_dna.classes.TopStrand` object
         """
         return TopStrand(start_index, strand_name)
 
@@ -72,20 +72,18 @@ class Cell:
 
     :param domains: A list of strings representing the domains of the cell in left to right order
     :param strand_labels: A list of dictionaries that map strand patterns to string labels. A string label will be
-    written underneath the cell in the SVG drawing if the strand pattern matches. Each dictionary has the following
-    key-value pairs:
-    |
-    | strands: A 2D list, where the first index is an integer that represents the start index of a strand relative to
-    the first domain of the cell, starting at 0. The second index is the string name of the strand type that should be
-    present at that index for the pattern to match.
-    | label: A string that will be printed underneath the cell in the SVG if the strand pattern in 'strands' matches
-    the cell's current contents.
-    |
-    | One example is the following dictionary:
-    | {'strands': [[0, 'Zero-first'], [3, 'Zero-second']], 'label': '0'}
-    | This means that if a strand of type 'Zero-first' has its leftmost domain attached to domain 0 of the cell, and
-    a strand of type 'Zero-second' has its leftmost domain attached to domain 3 of the cell, then the label string '0'
-    will be written underneath that cell in the SVG drawing.
+        written underneath the cell in the SVG drawing if the strand pattern matches. Each dictionary has the following
+        key-value pairs:\n\n
+        strands: A 2D list, where the first index is an integer that represents the start index of a strand relative to
+        the first domain of the cell, starting at 0. The second index is the string name of the strand type that should
+        be present at that index for the pattern to match.\n
+        label: A string that will be printed underneath the cell in the SVG if the strand pattern in 'strands' matches
+        the cell's current contents.\n\n
+        One example is the following dictionary:\n
+        {'strands': [[0, 'Zero-first'], [3, 'Zero-second']], 'label': '0'}\n
+        This means that if a strand of type 'Zero-first' has its leftmost domain attached to domain 0 of the cell, and
+        a strand of type 'Zero-second' has its leftmost domain attached to domain 3 of the cell, then the label string
+        '0' will be written underneath that cell in the SVG drawing.
     """
 
     def __init__(self, domains: List[str], strand_labels: Optional[List[Dict]] = None) -> None:
@@ -97,13 +95,13 @@ class Cell:
 
     @staticmethod
     def decode_json(domains: List[str], strand_labels: Optional[List[Dict]] = None, **kwargs) -> Cell:
-        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Cell .
+        """Decodes a JSON object and returns an instance of :class:`simd_dna.classes.Cell` .
 
         :param domains: A list of strings corresponding to the domains field
         :param strand_labels: A list of dictionaries corresponding to the strand_labels field
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:simd_dna.classes.Cell object
+        :return: A :class:`simd_dna.classes.Cell` object
         """
         if strand_labels is None:
             strand_labels = []
@@ -112,7 +110,7 @@ class Cell:
         return self
 
     def add_strand_label(self, coordinate_strand_pairs: List, string_label: str) -> None:
-        """Adds a new strand label to the cell type. See :class:simd_dna.classes.Cell for a detailed breakdown of the
+        """Adds a new strand label to the cell type. See :class:`simd_dna.classes.Cell` for a detailed breakdown of the
         strand label's data structure.
 
         :param coordinate_strand_pairs: A 2D list, where the first index is an integer that represents the start index
@@ -133,12 +131,12 @@ class Register:
     register, where the top strands are altered through DNA strand displacement. Waste products are washed away before
     the next instruction strands are applied.
 
-    :param cell_types: A dictionary of :class:simd_dna.classes.Cell instances representing the possible cell types that
-    can be part of this :class:simd_dna.classes.Register instance. The dictionary maps strings, which represent the
-    cell name, to the actual :class:simd_dna.classes.Cell instance.
-    :param strand_types: A dictionary of :class:simd_dna.classes.Strand instances representing the possible strand types
-    that can be part of this :class:simd_dna.classes.Register instance. The dictionary maps strings, which represent the
-    strand name, to the actual :class:simd_dna.classes.Strand instance.
+    :param cell_types: A dictionary of :class:`simd_dna.classes.Cell` instances representing the possible cell types that
+    can be part of this :class:`simd_dna.classes.Register` instance. The dictionary maps strings, which represent the
+    cell name, to the actual :class:`simd_dna.classes.Cell` instance.
+    :param strand_types: A dictionary of :class:`simd_dna.classes.Strand` instances representing the possible strand types
+    that can be part of this :class:`simd_dna.classes.Register` instance. The dictionary maps strings, which represent the
+    strand name, to the actual :class:`simd_dna.classes.Strand` instance.
 
     :ivar List[Dict] top_strands: A list of DNA top strands present on the register. Each top strand is a Python
     dictionary with the following key-value pairs:
@@ -251,13 +249,13 @@ class Register:
         :param domain_index: The integer index of the register domain that the leftmost domain of strand_type will
         attempt to attach to (e.g. attach strand 'one_first' starting at domain index 56.) If strand_type is
         complementary to the top strand, this parameter is ignored.
-        :param strand_type: The name of the :class:simd_dna.classes.Strand that will be attached. The name must be one
+        :param strand_type: The name of the :class:`simd_dna.classes.Strand` that will be attached. The name must be one
         of the keys in the Register's strand_types instance variable
-        :param unattached_matches: A list of :class:simd_dna.classes.TopStrand instances that complement the domains
+        :param unattached_matches: A list of :class:`simd_dna.classes.TopStrand` instances that complement the domains
         underneath, but are inert because no open toeholds are available. If the current strand to be attached matches
         but is inert, it will be added to this list. If the caller isn't interested in getting the location of inert
         instruction strands, None can be provided.
-        :return: A list containing :class:simd_dna.classes.TopStrand instances of new strands if attachment was
+        :return: A list containing :class:`simd_dna.classes.TopStrand` instances of new strands if attachment was
         successful, or None if no strands attached
         """
         if strand_type not in self.strand_types.keys():
@@ -604,15 +602,15 @@ class Register:
 
     @staticmethod
     def decode_json(cell_types: List[Cell], strand_types: List[Strand], cells, **kwargs) -> Register:
-        """Decodes a JSON object and returns an instance of :class:simd_dna.classes.Register
+        """Decodes a JSON object and returns an instance of :class:`simd_dna.classes.Register`
 
-        :param cell_types: A list of :class:simd_dna.classes.Cell types that can be present on this register
-        :param strand_types: A list of :class:simd_dna.classes.Strand types that can be present on this register
+        :param cell_types: A list of :class:`simd_dna.classes.Cell` types that can be present on this register
+        :param strand_types: A list of :class:`simd_dna.classes.Strand` types that can be present on this register
         :param cells: A string list of cell names that compose this Register instance, going from left to right as the
         list index increases
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
         JSON object. Any excess data is ignored.
-        :return: A :class:simd_dna.classes.Register object
+        :return: A :class:`simd_dna.classes.Register` object
         """
 
         self = Register(cell_types, strand_types)
