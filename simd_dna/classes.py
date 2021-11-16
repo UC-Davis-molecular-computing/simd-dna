@@ -139,11 +139,8 @@ class Register:
 
     :ivar List[str] cells: A list of :class:`simd_dna.classes.Cell` type names that represent the cells that compose
         this :class:`simd_dna.classes.Register`
-    :ivar List[Dict] top_strands: A list of DNA top strands present on the register. Each top strand is a Python
-        dictionary with the following key-value pairs:\n
-        **start_index:** An integer representing the absolute start position of the strand's leftmost domain, with
-        respect to the domains in the register
-        **strand_name:** A string that indicates the name of the strand type attached
+    :ivar List[simd_dna.classes.TopStrand] top_strands: A list of :class:`simd_dna.classes.TopStrand` s present on the
+        register.
     :ivar int total_domains: The total number of domains in the register's bottom strand
     """
 
