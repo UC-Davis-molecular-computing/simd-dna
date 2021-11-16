@@ -137,6 +137,8 @@ class Register:
         types that can be part of this :class:`simd_dna.classes.Register` instance. The dictionary maps strings, which
         represent the strand name, to the actual :class:`simd_dna.classes.Strand` instance.
 
+    :ivar List[str] cells: A list of :class:`simd_dna.classes.Cell` type names that represent the cells that compose
+        this :class:`simd_dna.classes.Register`
     :ivar List[Dict] top_strands: A list of DNA top strands present on the register. Each top strand is a Python
         dictionary with the following key-value pairs:\n
         **start_index:** An integer representing the absolute start position of the strand's leftmost domain, with
@@ -200,10 +202,10 @@ class Register:
         :param domain_index: The integer index of the domain in the register.
         :param include_orthogonal: A boolean specifying whether a separate list of DNA strands that are orthogonal at
             this domain index should be returned.
-        :param strand_set: A list of DNA top strands to be inspected. The register's
-            :ivar:`simd_dna.classes.Register.top_strands` instance variable will be used if None.
+        :param strand_set: A list of DNA top strands to be inspected. The register's top_strands instance variable will
+            be used if None.
         :return: The list of DNA top strands attached to the provided domain index, and the list of DNA top strands
-            with orthogonal domains hanging above the provided domain index if :param:`include_orthogonal` is set to
+            with orthogonal domains hanging above the provided domain index if include_orthogonal is set to
             true
         """
 
@@ -241,15 +243,15 @@ class Register:
     def attempt_attachment(self, domain_index: int,
                            strand_type: str,
                            unattached_matches: Optional[List[TopStrand]] = None) -> Optional[List[TopStrand]]:
-        """Attempts to attach a copy of :param:`strand_type`, with its leftmost domain placed on top of the specified
-        :param:`domain_index` if it's complementary to the bottom strand (strand_type.is_complementary is False.) If
-        complementary to the top strand, detaches all top strands that bind to :param:`strand_type` from the register.
+        """Attempts to attach a copy of strand_type, with its leftmost domain placed on top of the specified
+        domain_index if it's complementary to the bottom strand (strand_type.is_complementary is False.) If
+        complementary to the top strand, detaches all top strands that bind to strand_type from the register.
 
-        :param domain_index: The integer index of the register domain that the leftmost domain of :param:`strand_type`
+        :param domain_index: The integer index of the register domain that the leftmost domain of strand_type
             will attempt to attach to (e.g. attach strand 'one_first' starting at domain index 56.)
-            If :param:`strand_type` is complementary to the top strand, this parameter is ignored.
+            If strand_type is complementary to the top strand, this parameter is ignored.
         :param strand_type: The name of the :class:`simd_dna.classes.Strand` that will be attached. The name must be one
-            of the keys in the Register's :ivar:`simd_dna.classes.Register.strand_types` instance variable
+            of the keys in the Register's strand_types instance variable
         :param unattached_matches: A list of :class:`simd_dna.classes.TopStrand` instances that complement the domains
             underneath, but are inert because no open toeholds are available. If the current strand to be attached
             matches but is inert, it will be added to this list. If the caller isn't interested in getting the location
@@ -357,8 +359,8 @@ class Register:
         :func:`simd_dna.classes.Register.attempt_attachment`. By first attaching all possible new strands before
         displacing existing strands on the register, cooperative strand displacement can be simulated.
 
-        :param excluded_strands: A list of :class:`simd_dna.classes.TopStrand`s that should be exempt from displacement
-        :return: A list of :class:`simd_dna.classes.TopStrand`s that were displaced
+        :param excluded_strands: A list of :class:`simd_dna.classes.TopStrand` s that should be exempt from displacement
+        :return: A list of :class:`simd_dna.classes.TopStrand` s that were displaced
         """
         if excluded_strands is None:
             excluded_strands = []
@@ -390,9 +392,9 @@ class Register:
               unused_strands: Optional[List[TopStrand]] = None) -> None:
         """Prints the register's current contents on the terminal.
 
-        :param new_strands: A list of :class:`simd_dna.classes.TopStrand`s that will displace the current strands,
+        :param new_strands: A list of :class:`simd_dna.classes.TopStrand` s that will displace the current strands,
             which will be printed one level above the current strands on the register.
-        :param unused_strands: A list of :class:`simd_dna.classes.TopStrand`s that would've attached to the register but
+        :param unused_strands: A list of :class:`simd_dna.classes.TopStrand` s that would've attached to the register but
             are inert, which will be printed two levels above the current strands on the register.
         """
         if unused_strands is not None and len(unused_strands) > 0:
@@ -551,9 +553,9 @@ class Register:
         in the visual representation of the register, in case the user chooses to print the register on the console or
         display its contents through an SVG representation.
 
-        :param inert_strands: A list of inert :class:`simd_dna.classes.TopStrand`s after applying an instruction
-        :param new_strands: A list of newly attached :class:`simd_dna.classes.TopStrand`s after applying an instruction
-        :return: A list of inert :class:`simd_dna.classes.TopStrand`s after overlapping strands are removed
+        :param inert_strands: A list of inert :class:`simd_dna.classes.TopStrand` s after applying an instruction
+        :param new_strands: A list of newly attached :class:`simd_dna.classes.TopStrand` s after applying an instruction
+        :return: A list of inert :class:`simd_dna.classes.TopStrand` s after overlapping strands are removed
         """
         sanitized_strands = []
         for strand in reversed(inert_strands):
