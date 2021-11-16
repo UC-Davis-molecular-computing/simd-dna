@@ -34,7 +34,7 @@ class Strand:
         :param is_complementary: A boolean corresponding to the is_complementary field
         :param color:  A string corresponding to the color field
         :param kwargs: kwargs is placed to avoid throwing errors in the decode step if excess data is present in the
-        JSON object. Any excess data is ignored.
+            JSON object. Any excess data is ignored.
         :return: A :class:`simd_dna.classes.Strand` object
         """
         self = Strand(domains, is_complementary, color)
@@ -168,7 +168,7 @@ class Register:
         self.cells.append(cell_name)
         self.total_domains += len(self.cell_types[cell_name].domains)
 
-    def get_cell_at_domain_index(self, domain_index: int) -> (Optional[str], int):
+    def get_cell_at_domain_index(self, domain_index: int) -> Tuple[Optional[str], int]:
         """Returns the name of the cell type at the given domain index, starting from index 0, as well as the numerical
         offset relative to the beginning of the enclosing cell, starting at 0. For example, if a register has cells
         of type A, B, C in that order, where each cell type has 3 domains, then domains 0-2 will return A, 3-5 will
