@@ -5,9 +5,7 @@ import copy
 import json
 
 program_loop = True
-# todo: transfer these booleans to the SVG class
-compress_svg_drawings = False
-draw_inert_instructions_svg = False
+svg_drawing = RegisterSVGDrawing()
 local_simulation = Simulation()
 
 
@@ -83,7 +81,6 @@ def run_simulation():
         else:
             original_register = copy.deepcopy(register)
             local_simulation.keep_results = True  # temporarily save results during instruction cycle
-        svg_drawing = RegisterSVGDrawing(compress_svg_drawings)
         svg_drawing.initialize(register, register_key, len(local_simulation.instructions))
 
         for inst_num in range(len(local_simulation.instructions)):
@@ -100,7 +97,7 @@ def run_simulation():
                 before_register.print(new_strands, inert_matches)
                 print()
 
-            if draw_inert_instructions_svg or len(new_strands) > 0:
+            if svg_drawing.draw_inert_instructions or len(new_strands) > 0:
                 svg_drawing.draw_contents(before_register, label, len(new_strands) == 0)
                 svg_drawing.draw_strands(register, new_strands, 3)
                 svg_drawing.draw_strands(register, inert_matches,
@@ -155,8 +152,7 @@ def toggle_show_unused_instruction_strands():
 
 
 def toggle_compress_svg_drawings():
-    global compress_svg_drawings
-    compress_svg_drawings = not compress_svg_drawings
+    svg_drawing.compress_svg_drawings = not svg_drawing.compress_svg_drawings
 
 
 def convert_tm_to_simd_wrapper():
@@ -164,8 +160,7 @@ def convert_tm_to_simd_wrapper():
 
 
 def toggle_draw_inert_instructions():
-    global draw_inert_instructions_svg
-    draw_inert_instructions_svg = not draw_inert_instructions_svg
+    svg_drawing.draw_inert_instructions = not svg_drawing.draw_inert_instructions
 
 
 def exit_loop():
@@ -225,10 +220,10 @@ def simd_simulator(args):
                        '''10 - ''' + ('Don\'t show inert instruction strands\n'
                                       if local_simulation.show_inert_instruction_strands
                                       else 'Show inert instruction strands\n') +
-                       '''11 - ''' + ('Don\'t compress SVG drawings\n' if compress_svg_drawings
+                       '''11 - ''' + ('Don\'t compress SVG drawings\n' if svg_drawing.compress_svg_drawings
                                       else 'Compress SVG drawings\n') +
                        '''12 - Convert turingmachine.io Turing machine to SIMD register
-13 - ''' + ('Don\'t draw inert instructions in SVG' if draw_inert_instructions_svg
+13 - ''' + ('Don\'t draw inert instructions in SVG' if svg_drawing.draw_inert_instructions
             else 'Draw inert instructions in SVG') +
                         '''
 14 - Exit

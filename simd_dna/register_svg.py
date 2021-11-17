@@ -1,6 +1,8 @@
 import svgwrite
 from functools import partial
 from simd_dna.functions import *
+from simd_dna.classes import *
+from typing import Optional, List
 
 
 class RegisterSVGDrawing:
@@ -22,34 +24,38 @@ class RegisterSVGDrawing:
         'layer_offset': 3
     }
 
-    def __init__(self, compress_svg_drawings=False):
+    def __init__(self, compress_svg_drawings: bool = False, draw_inert_instructions: bool = False) -> None:
         self._dwg = None
         self.compress_svg_drawings = compress_svg_drawings
+        self.draw_inert_instructions = draw_inert_instructions
         self._current_size_parameters = self._normal_size_parameters
         self._vertical_offset = self._current_size_parameters['initial_vertical_offset']
 
-    def initialize(self, register, name=None, num_instructions=None):
-        if self._dwg is None:
-            name = name if name is not None else 'output'
-            if self.compress_svg_drawings:
-                self._current_size_parameters = self._compressed_size_parameters
-            self._vertical_offset = self._current_size_parameters['initial_vertical_offset']
-            width = str(10 + (register.total_domains + 10) * self._domain_length) + "mm"
-            height = "100%" if num_instructions is None \
-                else str(self._current_size_parameters['initial_vertical_offset']
-                         + self._vertical_offset
-                         + (num_instructions * self._current_size_parameters['vertical_offset_increment'])) + "mm"
-            self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
+    def initialize(self, register: Register,
+                   name: Optional[str] = None,
+                   num_instructions: Optional[int] = None) -> None:
+        name = name if name is not None else 'output'
+        if self.compress_svg_drawings:
+            self._current_size_parameters = self._compressed_size_parameters
+        else:
+            self._current_size_parameters = self._normal_size_parameters
+        self._vertical_offset = self._current_size_parameters['initial_vertical_offset']
+        width = str(10 + (register.total_domains + 10) * self._domain_length) + "mm"
+        height = "100%" if num_instructions is None \
+            else str(self._current_size_parameters['initial_vertical_offset']
+                     + self._vertical_offset
+                     + (num_instructions * self._current_size_parameters['vertical_offset_increment'])) + "mm"
+        self._dwg = svgwrite.Drawing(name + '.svg', size=(width, height))
 
-    def draw_contents(self, register, label=None, draw_x=False):
+    def draw_contents(self, register: Register, label: Optional[str] = None, draw_x: bool = False) -> None:
         self._draw_register_outline(register, label, draw_x)
         self.draw_strands(register, register.top_strands, 1)
         self._draw_cell_strand_labels(register)
 
-    def increment_vertical_offset(self):
+    def increment_vertical_offset(self) -> None:
         self._vertical_offset += self._current_size_parameters['vertical_offset_increment']
 
-    def _draw_register_outline(self, register, label, draw_x=False):
+    def _draw_register_outline(self, register: Register, label: str, draw_x: bool = False) -> None:
         if label is not None:
             self._dwg.add(
                 self._dwg.text(label, x=[str(float(self._current_size_parameters['left_offset'] / 2)) + "mm"],
@@ -110,7 +116,10 @@ class RegisterSVGDrawing:
                             str(self._vertical_offset - self._current_size_parameters['cell_height']) + "mm"),
                            stroke=svgwrite.rgb(0, 0, 0)))
 
-    def draw_strands(self, register, strand_set, layer, is_unattached_set=False):
+    def draw_strands(self, register: Register,
+                     strand_set: List[TopStrand],
+                     layer: int,
+                     is_unattached_set: bool = False) -> None:
         if strand_set is None:
             return
 
@@ -299,9 +308,11 @@ class RegisterSVGDrawing:
                                                  stroke_width="1mm",
                                                  stroke_dasharray=non_complementary_stroke_dasharray))
 
-    def _draw_horizontal_line(self, strand, current_start, short_right, y, color, draw_arrow_head,
-                              non_complementary_stroke_dasharray,
-                              complementary_stroke_dasharray):
+    def _draw_horizontal_line(self, strand: Strand, current_start: str,
+                              short_right: str, y: str,
+                              color: str, draw_arrow_head: bool,
+                              non_complementary_stroke_dasharray: str,
+                              complementary_stroke_dasharray: str) -> None:
         if strand.is_complementary:
             self._dwg.add(
                 self._dwg.line((current_start, y), (short_right, y), stroke=color,
@@ -313,7 +324,7 @@ class RegisterSVGDrawing:
                 self._dwg.line((current_start, y), (short_right, y), stroke=color,
                                stroke_width="1mm", stroke_dasharray=non_complementary_stroke_dasharray))
 
-    def _draw_cell_strand_labels(self, register):
+    def _draw_cell_strand_labels(self, register: Register) -> None:
         previous_domains = 0
         for cell_name in register.cells:
             cell = register.cell_types[cell_name]
@@ -353,7 +364,7 @@ class RegisterSVGDrawing:
 
             previous_domains += len(cell.domains)
 
-    def _draw_right_arrow(self, tip_x, tip_y, color):
+    def _draw_right_arrow(self, tip_x: float, tip_y: float, color: str) -> None:
         right = tip_x * 3.7795
         left = (tip_x - self._domain_length / 3) * 3.7795
         y = tip_y * 3.7795
@@ -363,7 +374,7 @@ class RegisterSVGDrawing:
             self._dwg.polygon(points=[(right, y), (left, upper_y), (left, lower_y)],
                               stroke=color, fill=color, stroke_width="1mm"))
 
-    def _draw_left_arrow(self, tip_x, tip_y, color):
+    def _draw_left_arrow(self, tip_x: float, tip_y: float, color: str) -> None:
         left = tip_x * 3.7795
         right = left + (self._domain_length / 3) * 3.7795
         y = tip_y * 3.7795
@@ -373,7 +384,7 @@ class RegisterSVGDrawing:
             self._dwg.polygon(points=[(left, y), (right, lower_y), (right, upper_y)],
                               stroke=color, fill=color, stroke_width="1mm"))
 
-    def _draw_upper_right_arrow(self, tip_x, tip_y, color):
+    def _draw_upper_right_arrow(self, tip_x: float, tip_y: float, color: str) -> None:
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
         x2 = (tip_x - self._domain_length // 2) * 3.7795
@@ -384,7 +395,7 @@ class RegisterSVGDrawing:
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
                               stroke=color, fill=color, stroke_width="1mm"))
 
-    def _draw_upper_left_arrow(self, tip_x, tip_y, color):
+    def _draw_upper_left_arrow(self, tip_x: float, tip_y: float, color: str) -> None:
         x1 = tip_x * 3.7795
         y1 = tip_y * 3.7795
         x2 = (tip_x + self._domain_length // 4) * 3.7795
@@ -395,7 +406,7 @@ class RegisterSVGDrawing:
             self._dwg.polygon(points=[(x1, y1), (x2, y2), (x3, y3)],
                               stroke=color, fill=color, stroke_width="1mm"))
 
-    def save_svg(self):
+    def save_svg(self) -> None:
         if self._dwg is not None:
             self._dwg.save(pretty=True)
             self._dwg = None
