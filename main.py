@@ -5,6 +5,7 @@ import copy
 import json
 
 program_loop = True
+# todo: transfer these booleans to the SVG class
 compress_svg_drawings = False
 draw_inert_instructions_svg = False
 local_simulation = Simulation()
@@ -150,7 +151,7 @@ def toggle_keep_results():
 
 
 def toggle_show_unused_instruction_strands():
-    local_simulation.show_unused_instruction_strands = not local_simulation.show_unused_instruction_strands
+    local_simulation.show_inert_instruction_strands = not local_simulation.show_inert_instruction_strands
 
 
 def toggle_compress_svg_drawings():
@@ -222,7 +223,7 @@ def simd_simulator(args):
                            'Don\'t keep results after simulation\n' if local_simulation.keep_results
                            else 'Keep results after simulation\n') +
                        '''10 - ''' + ('Don\'t show inert instruction strands\n'
-                                      if local_simulation.show_unused_instruction_strands
+                                      if local_simulation.show_inert_instruction_strands
                                       else 'Show inert instruction strands\n') +
                        '''11 - ''' + ('Don\'t compress SVG drawings\n' if compress_svg_drawings
                                       else 'Compress SVG drawings\n') +
