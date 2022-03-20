@@ -4,6 +4,10 @@ A Python simulator for the SIMD||DNA model of computation, as defined in https:/
 Code documentation can be found at https://simd-dna.readthedocs.io/en/latest/
 
 # Setup
+## Using pip
+Run `python -m pip install simd-dna` in the terminal of your Python project.
+
+## Directly using the code base
 1. Install PyCharm: https://www.jetbrains.com/pycharm/
 2. In the Welcome screen, select Open (if using PyCharm for the first time) or go to File > Open (if using PyCharm with a pre-existing project loaded) and open the root directory of the repository.
 3. Go to File > Settings > Project > Python Interpreter. Choose a Python interpreter from the list if you already have any, or click on the gear icon to the right and choose Add. I recommend using a Virtualenv environment to keep it self-contained.
