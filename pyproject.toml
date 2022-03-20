@@ -1,0 +1,3 @@
+[build-system]
+requires = ["setuptools", "svgwrite", "ruamel.yaml", "seaborn"]
+build-backend = "setuptools.build_meta"
