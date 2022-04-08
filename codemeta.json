@@ -1,0 +1,35 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "license": "https://spdx.org/licenses/MIT",
+    "codeRepository": "https://github.com/UC-Davis-molecular-computing/simd-dna",
+    "name": "SIMD||DNA",
+    "version": "1.0.1",
+    "description": "A Python simulator for the SIMD||DNA model of computation, as defined in https://doi.org/10.1007/978-3-030-26807-7_12 (preprint: http://users.ece.utexas.edu/~soloveichik/papers/simd-dna.pdf)",
+    "programmingLanguage": [
+        "Python 3"
+    ],
+    "author": [
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0002-3922-172X",
+            "givenName": "David",
+            "familyName": "Doty",
+            "email": "doty@ucdavis.edu",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Department of Computer Science, University of California Davis"
+            }
+        },
+        {
+            "@type": "Person",
+            "givenName": "Aaron",
+            "familyName": "Ong",
+            "email": "aabong@ucdavis.edu",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Department of Computer Science, University of California Davis"
+            }
+        }
+    ]
+}
