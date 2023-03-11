@@ -1,6 +1,7 @@
 import sys
 
 from simd_dna import *
+from simd_dna.classes import TopStrand
 import copy
 import json
 
@@ -30,15 +31,15 @@ def add_cells_to_register():
     else:
         coverings = coverings.split(';')
 
-    coverings = list(map(extract_covering_offset_pair, coverings))
+    coverings = list(map(extract_top_strand, coverings))
 
     local_simulation.add_cells_to_register(register_name, cell_name, coverings, copies)
 
 
-def extract_covering_offset_pair(value):
+def extract_top_strand(value):
     pair = value.split(',')
     pair[1] = int(pair[1])
-    return pair
+    return TopStrand(pair[1], pair[0])
 
 
 def add_strand_type():
