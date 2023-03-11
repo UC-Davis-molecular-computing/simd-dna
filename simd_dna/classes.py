@@ -275,24 +275,37 @@ class Register:
 
             displaced_strands = []
             displacing_strands = []
+            found_match = False
             for top_strand in self.top_strands:
+                if found_match:
+                    break
                 top_strand_domains = self.strand_types[top_strand.strand_name].domains
-                is_match = True
-                for i in range(len(top_strand_domains)):
-                    if strand.domains[i] != top_strand_domains[i]:
-                        is_match = False
-                        break
-
-                if is_match:
+                # check different alignments
+                for offset in range(len(strand.domains) - 1, -len(top_strand_domains), -1):
                     strand_start = top_strand.start_index
-                    strand_end = strand_start + len(top_strand_domains)
-                    for i in range(strand_start, strand_end):
-                        top_strands_at_domain = self.get_top_strands_at_domain_index(i)
-                        # must have at least one insecure domain
-                        if len(top_strands_at_domain) > 1 or top_strand not in top_strands_at_domain:
-                            displaced_strands.append(top_strand)
-                            displacing_strands.append(TopStrand(strand_start, strand_type))
-                            break
+                    is_loose = [False for _ in range(len(top_strand_domains))]
+                    found_loose_match = False
+                    for i in range(len(top_strand_domains)):
+                        top_strands_at_domain = self.get_top_strands_at_domain_index(strand_start + i)
+
+                        competing_strands_present = len(top_strands_at_domain) > 1
+                        is_orthogonal_to_bottom_strand = top_strand not in top_strands_at_domain
+                        is_complementary = (0 <= i + offset < len(strand.domains)) and \
+                            strand.domains[i + offset] == top_strand_domains[i]
+
+                        if competing_strands_present or is_orthogonal_to_bottom_strand:
+                            is_loose[i] = True
+                            if is_complementary:
+                                found_loose_match = True
+                        elif is_complementary:
+                            is_loose[i] = True
+
+                    if is_loose.count(True) >= len(top_strands_at_domain) - 1 and found_loose_match:
+                        print(offset)
+                        displaced_strands.append(top_strand)
+                        displacing_strands.append(TopStrand(strand_start - offset, strand_type))
+                        found_match = True
+                        break
 
             if len(displaced_strands) > 0:
                 self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
