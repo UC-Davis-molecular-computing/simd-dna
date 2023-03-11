@@ -73,7 +73,7 @@ class Simulation:
             for top_strand in top_strands:
                 strand_type = top_strand[0]
                 offset = top_strand[1]
-                current_register.attempt_attachment(-cell_size + offset, strand_type)
+                current_register.attempt_bottom_strand_attachment(-cell_size + offset, strand_type)
 
     def add_strand_type(self, name: str, domains: List[str],
                         is_complementary: bool = False, color: str = '#000000') -> None:
@@ -147,10 +147,15 @@ class Simulation:
             while displacement_occurred:  # Repeat in case of toehold exchanges/cascades
                 new_attachments = []
                 for strand_name in inst:
-                    for i in range(total_domains):
-                        new_attachment = register.attempt_attachment(i, strand_name, inert_matches)
+                    if self.strand_types[strand_name].is_complementary:
+                        new_attachment = register.attempt_top_strand_attachment(strand_name, inert_matches)
                         if new_attachment is not None:
                             new_attachments.extend(new_attachment)
+                    else:
+                        for i in range(total_domains):
+                            new_attachment = register.attempt_bottom_strand_attachment(i, strand_name, inert_matches)
+                            if new_attachment is not None:
+                                new_attachments.extend(new_attachment)
 
                 # do first round of displacements preserving the new strands
                 if len(new_attachments) > 0:

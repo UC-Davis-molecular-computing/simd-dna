@@ -237,18 +237,17 @@ class Register:
         else:
             return top_strands
 
-    def attempt_attachment(self, domain_index: int,
+    def attempt_bottom_strand_attachment(self, domain_index: int,
                            strand_type: str,
                            unattached_matches: Optional[List[TopStrand]] = None) -> Optional[List[TopStrand]]:
         """Attempts to attach a copy of strand_type, with its leftmost domain placed on top of the specified
-        domain_index if it's complementary to the bottom strand (strand_type.is_complementary is False.) If
-        complementary to the top strand, detaches all top strands that bind to strand_type from the register.
+        domain_index of the bottom strand.
 
         :param domain_index: The integer index of the register domain that the leftmost domain of strand_type
             will attempt to attach to (e.g. attach strand 'one_first' starting at domain index 56.)
             If strand_type is complementary to the top strand, this parameter is ignored.
         :param strand_type: The name of the :class:`simd_dna.classes.Strand` that will be attached. The name must be one
-            of the keys in the Register's strand_types instance variable
+            of the keys in the Register's strand_types instance variable.
         :param unattached_matches: A list of :class:`simd_dna.classes.TopStrand` instances that complement the domains
             underneath, but are inert because no open toeholds are available. If the current strand to be attached
             matches but is inert, it will be added to this list. If the caller isn't interested in getting the location
@@ -266,63 +265,9 @@ class Register:
                 total_domains += len(self.cell_types[cell_name].domains)
 
             domain_index += total_domains
+
         strand = self.strand_types[strand_type]
-
-        if strand.is_complementary:
-            # If strand_type is complementary to the top strand, store all the strands that top_strand removes in
-            # displaced_strands, and store TopStrand instances in displacing_strands, which note the domain indices
-            # where strand_type successfully binds to the top strand
-
-            displaced_strands = []
-            displacing_strands = []
-            for top_strand in self.top_strands:
-                domains = self.strand_types[top_strand.strand_name].domains
-                # check different alignments
-                for offset in range(len(strand.domains) - 1, -len(domains), -1):
-                    strand_start = top_strand.start_index
-                    is_loose = [False for _ in range(len(domains))]
-                    found_loose_match = False
-                    for i in range(len(domains)):
-                        top_strands_at_domain = self.get_top_strands_at_domain_index(strand_start + i)
-
-                        competing_strands_present = len(top_strands_at_domain) > 1
-                        is_orthogonal_to_bottom_strand = top_strand not in top_strands_at_domain
-                        is_complementary = (0 <= i + offset < len(strand.domains)) and \
-                            strand.domains[i + offset] == domains[i]
-
-                        if competing_strands_present or is_orthogonal_to_bottom_strand:
-                            is_loose[i] = True
-                            if is_complementary:
-                                found_loose_match = True
-                        elif is_complementary:
-                            is_loose[i] = True
-
-                    if is_loose.count(True) >= len(domains) - 1 and found_loose_match:
-                        displaced_strands.append(top_strand)
-                        displacing_strands.append(TopStrand(strand_start - offset, strand_type))
-                        break
-
-            if len(displaced_strands) > 0:
-                print(displaced_strands)
-                self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
-                return displacing_strands
-            elif unattached_matches is not None:
-                # If the caller provides an unattached_matches list and the strand doesn't successfully bind at
-                # domain_index, check if strand_type matches at least one domain. If so, it's considered inert and
-                # is added to the list if not already present.
-
-                matchings = 0
-                for i in range(len(strand.domains)):
-                    cell, offset = self.get_cell_at_domain_index(domain_index + i)
-                    if cell is not None and cell.domains[offset] == strand.domains[i]:
-                        matchings += 1
-
-                if matchings >= 1:
-                    new_strand = TopStrand(domain_index, strand_type)
-                    if new_strand not in unattached_matches:
-                        unattached_matches.append(new_strand)
-                        unattached_matches.sort(key=lambda x: x.start_index)
-        else:
+        if not strand.is_complementary:
             # If strand_type is complementary to the bottom strand, check if an open toehold is present when the strand
             # is placed according to domain_index. If so, check if the strand matches at least two domains along the
             # bottom strand, and return a list containing a new TopStrand instance if so. If no open toeholds are
@@ -357,13 +302,86 @@ class Register:
                             unattached_matches.append(new_top_strand)
                             unattached_matches.sort(key=lambda x: x.start_index)
                         return None
+        else:
+            raise ValueError('Only non-complementary instructions are allowed')
 
-        return None
+    def attempt_top_strand_attachment(self, strand_type: str,
+                                      unattached_matches: Optional[List[TopStrand]] = None) -> Optional[List[TopStrand]]:
+        """Attempts to attach a copy of strand_type to any top strand with an orthogonal or loose domain.
+
+        :param strand_type: The name of the :class:`simd_dna.classes.Strand` that will be attached. The name must be one
+            of the keys in the Register's strand_types instance variable
+        :param unattached_matches: A list of :class:`simd_dna.classes.TopStrand` instances that complement the domains
+            underneath, but are inert because no open toeholds are available. If the current strand to be attached
+            matches but is inert, it will be added to this list. If the caller isn't interested in getting the location
+            of inert instruction strands, None can be provided.
+        :return: A list containing :class:`simd_dna.classes.TopStrand` instances of new strands if attachment was
+            successful, or None if no strands attached
+        """
+        if strand_type not in self.strand_types.keys():
+            raise ValueError('Strand type does not exist')
+
+        strand = self.strand_types[strand_type]
+        if strand.is_complementary:
+            # If strand_type is complementary to the top strand, store all the strands that top_strand removes in
+            # displaced_strands, and store TopStrand instances in displacing_strands, which note the domain indices
+            # where strand_type successfully binds to the top strand
+
+            displaced_strands = []
+            displacing_strands = []
+            for top_strand in self.top_strands:
+                domains = self.strand_types[top_strand.strand_name].domains
+                # check different alignments
+                for offset in range(len(strand.domains) - 1, -len(domains), -1):
+                    strand_start = top_strand.start_index
+                    is_loose = [False for _ in range(len(domains))]
+                    found_loose_match = False
+                    for i in range(len(domains)):
+                        top_strands_at_domain = self.get_top_strands_at_domain_index(strand_start + i)
+
+                        competing_strands_present = len(top_strands_at_domain) > 1
+                        is_orthogonal_to_bottom_strand = top_strand not in top_strands_at_domain
+                        is_complementary = (0 <= i + offset < len(strand.domains)) and \
+                                           strand.domains[i + offset] == domains[i]
+
+                        if competing_strands_present or is_orthogonal_to_bottom_strand:
+                            is_loose[i] = True
+                            if is_complementary:
+                                found_loose_match = True
+                        elif is_complementary:
+                            is_loose[i] = True
+
+                    if is_loose.count(True) >= len(domains) - 1 and found_loose_match:
+                        displaced_strands.append(top_strand)
+                        displacing_strands.append(TopStrand(strand_start - offset, strand_type))
+                        break
+
+            if len(displaced_strands) > 0:
+                self.top_strands = [x for x in self.top_strands if x not in displaced_strands]
+                return displacing_strands
+            elif unattached_matches is not None:
+                # If the caller provides an unattached_matches list, check if strand_type matches at least one domain.
+                # If so, it's considered inert and is added to the list if not already present.
+
+                for i in range(self.total_domains):
+                    matchings = 0
+                    for j in range(len(strand.domains)):
+                        cell, offset = self.get_cell_at_domain_index(i + j)
+                        if cell is not None and cell.domains[offset] == strand.domains[j]:
+                            matchings += 1
+
+                    if matchings >= 1:
+                        new_strand = TopStrand(i, strand_type)
+                        if new_strand not in unattached_matches:
+                            unattached_matches.append(new_strand)
+                            unattached_matches.sort(key=lambda x: x.start_index)
+        else:
+            raise ValueError('Only complementary instructions are allowed')
 
     def displace_strands(self, excluded_strands: Optional[List[TopStrand]] = None) -> List[TopStrand]:
         """Simulates DNA strand displacement on the register, initiated by the new strands introduced by
-        :func:`simd_dna.classes.Register.attempt_attachment`. By first attaching all possible new strands before
-        displacing existing strands on the register, cooperative strand displacement can be simulated.
+        :func:`simd_dna.classes.Register.attempt_bottom_strand_attachment`. By first attaching all possible new strands
+        before displacing existing strands on the register, cooperative strand displacement can be simulated.
 
         :param excluded_strands: A list of :class:`simd_dna.classes.TopStrand` s that should be exempt from displacement
         :return: A list of :class:`simd_dna.classes.TopStrand` s that were displaced
