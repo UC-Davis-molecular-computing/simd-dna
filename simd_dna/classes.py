@@ -301,7 +301,6 @@ class Register:
                             is_loose[i] = True
 
                     if is_loose.count(True) >= len(top_strands_at_domain) - 1 and found_loose_match:
-                        print(offset)
                         displaced_strands.append(top_strand)
                         displacing_strands.append(TopStrand(strand_start - offset, strand_type))
                         found_match = True
