@@ -1,5 +1,4 @@
 import copy
-from typing import Optional, List, Tuple, Mapping
 from simd_dna.classes import *
 
 
