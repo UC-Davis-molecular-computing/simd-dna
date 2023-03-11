@@ -71,9 +71,7 @@ class Simulation:
         for _ in range(copies):
             current_register.add_cell(cell_name)
             for top_strand in top_strands:
-                strand_type = top_strand[0]
-                offset = top_strand[1]
-                current_register.attempt_bottom_strand_attachment(-cell_size + offset, strand_type)
+                current_register.attempt_bottom_strand_attachment(-cell_size + top_strand.start_index, top_strand.strand_name)
 
     def add_strand_type(self, name: str, domains: List[str],
                         is_complementary: bool = False, color: str = '#000000') -> None:
